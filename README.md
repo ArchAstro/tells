@@ -163,6 +163,15 @@ so treat this one as a demo, not a test.)
    phrases, nominalisations, sentence-to-sentence restatement, vocabulary
    variety and compressibility. `check` flags a draft that is wordier *or*
    tighter than every document the author wrote.
+8. **Machine-likeness.** For each of the reference's AI tells, is the text
+   nearer the machines' rate or the human's? The share of tells where it's
+   nearer the machines is its machine-likeness. It doesn't depend on any one
+   author: Paul Graham's essays score 0.04–0.39 and every model essay
+   0.61–1.00. `build` uses it to flag documents in the author's own corpus
+   that an assistant probably wrote, because a model trained on a few of
+   those will steer every draft toward the assistant's voice. `check` reports
+   it for the draft. It measures sentence structure, so sprinkling in the
+   author's favourite words doesn't move it.
 
 ## Use it
 

@@ -86,6 +86,13 @@ def cmd_build(a) -> None:
     for c in corpora:
         unit = "chunks" if c.chunked else "docs"
         print(f"  {c.name:12} {c.n_files:4} files -> {len(c.docs):3} {unit}, {c.n:5} sentences, weight {c.weight:g}")
+    suspects = [r for r in M.corpus_machine_likeness(model, ref) if r[2] >= M.MACHINE_LINE]
+    if suspects:
+        print(f"  warning: {len(suspects)} document(s) read as machine-written (machine-likeness >= {M.MACHINE_LINE}):")
+        for corpus, doc, s in sorted(suspects, key=lambda r: -r[2]):
+            print(f"    {s:.2f}  {corpus}: {doc}")
+        print("  If an assistant drafted or heavily edited them, rebuild with -x for each: they teach the\n"
+              "  model the assistant's voice, and check will then push drafts toward it.")
     if model.pairs:
         sig = ", ".join(r["pair"] for r in model.pairs["signature"][:10])
         print(f"  your word pairs: {sig} ...")
@@ -127,12 +134,16 @@ def cmd_check(a) -> None:
     cal = [] if a.no_calibrate else M.calibrate(model)
     bands = M.bands(cal)
     dist = M.distance(stats, model)
+    ml = M.machine_likeness(stats, ref)
+    ml_yours = [s for _, _, s in M.corpus_machine_likeness(model, ref)]
 
     if a.json:
         out = {
             "draft": doc.path, "sentences": stats.n, "mean_words": stats.mean_len,
             "model_mean_words": model.mean_len(), "off": M.n_off(rows), "calibration": bands, "distance": dist, "sd_len": stats.sd_len,
             "calibration_distance": M.bands(cal, "distance"), "calibration_sd_len": M.bands(cal, "sd_len"),
+            "machine_likeness": {"draft": ml, "yours": [min(ml_yours), max(ml_yours)] if ml_yours else None,
+                                 "line": M.MACHINE_LINE},
             "pairs": pr, "verbosity": vrows, "filler_sentences": V.fillers(doc.sentences)[:10],
             "features": [{
                 "id": r.id, "label": FEATURES[r.id].label, "draft": r.draft, "author": r.combined,
@@ -185,6 +196,14 @@ def cmd_check(a) -> None:
                   f"{', '.join(tells)}")
     off = M.n_off(rows)
     print(f"\n{off} of {len(FEATURES)} features off.")
+    if ml is not None:
+        yours = f"your documents {min(ml_yours):.2f}-{max(ml_yours):.2f}; " if ml_yours else ""
+        print(f"\nMachine-likeness (share of AI tells where the draft sits nearer the machines): draft {ml:.2f}"
+              f"\n  {yours}machine-written text is usually {M.MACHINE_LINE}+")
+        if ml >= M.MACHINE_LINE:
+            print("  Reads as machine-written by its structure, whatever its words: fix the `ai` rows first.")
+        if ml_yours and max(ml_yours) >= M.MACHINE_LINE:
+            print("  Some of your own documents score as machine-written; see `build` and consider -x.")
     if pr:
         print_pairs(pr)
     if vrows:

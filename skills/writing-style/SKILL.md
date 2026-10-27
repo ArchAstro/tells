@@ -36,6 +36,15 @@ writing-style calibrate ~/.cache/writing-style/me.json
 
 1. Only text the author wrote themselves. No drafts you helped write, no
    co-authored docs, no decks, no research notes: they pull the model toward you.
+   Prefer what they actually published (a live blog, a newsletter archive) over
+   local drafts, which may have been agent-written or agent-edited.
+   - `build` scores every document's *machine-likeness* and warns about any at
+     0.6 or above. Show the user that list and ask whether an assistant wrote
+     or heavily edited those; if so, rebuild with `-x` for each. Don't skip
+     this: a few agent-written posts teach the model the assistant's voice,
+     and `check` will then tell you to write more like the assistant (more
+     short sentences and fragments, fewer purpose clauses), and every revision
+     drifts further from the author.
 2. One `-c` per kind of writing (blog, tweets, email). Corpora are weighted
    equally, so 600 tweets don't drown 8 posts. Many short docs are packed into
    120-sentence chunks automatically.
@@ -59,6 +68,12 @@ Verdicts per feature:
 | `ai` (suffix) | off in the direction machine prose leans | prioritise it |
 | blank | within range | nothing |
 
+`check` also prints the draft's **machine-likeness**: the share of known AI
+tells where it sits nearer machine prose than human prose, next to the range of
+the author's own documents. Machine-written text is usually 0.6+. It looks at
+structure, not vocabulary, so sprinkling in the author's favourite words won't
+move it; rewriting sentences the way the author builds them will.
+
 ## 3. Revise in small batches
 
 1. Fix only `FIX` rows. Start with the largest |z|.
@@ -76,7 +91,20 @@ Verdicts per feature:
    excluded from measurement anyway.
 6. If the user edits in an editor that takes suggestions, propose the
    changes as suggestions, not direct edits.
-7. Matching the rates is not the same as reading human. A draft can be tuned
+7. Never add fragments or very short sentences to hit a `short_sentence` or
+   `fragment` target ("Every time." "Not once." "Ouch."). Punchline fragments
+   are one of the most recognisable AI patterns. If those rows say "too few",
+   first check the corpus: short-form writing (tweets) and agent-written posts
+   both inflate them. Let a long-form draft follow the author's long-form
+   corpus.
+8. Never paste the author's signature words or favourite word pairs into
+   sentences you wrote. It fools the pair counts, not
+   readers, and machine-likeness won't move.
+9. Cutting for length is where an assistant's voice creeps back in: it
+   compresses into dense, varied, clipped sentences. If the author's prose is
+   loose (repeats words, explains why with "to ..." clauses, starts with "So"
+   and "And"), keep that looseness and cut whole sentences or ideas instead.
+10. Matching the rates is not the same as reading human. A draft can be tuned
    to zero flags and still read as generated to a person or a detector. The
    author's own concrete sentences are what carry their voice, so keep their
    words rather than rewriting them.
@@ -119,6 +147,6 @@ over-use imperatives and gerund complements. Features the brief itself steered
 
 ## 5. Report
 
-End with a before/after table: features off, sentences, mean words per
-sentence, calibration band, and which `FIX` rows you changed. One line on
+End with a before/after table: features off, machine-likeness, sentences,
+mean words per sentence, calibration band, and which `FIX` rows you changed. One line on
 anything you deliberately left (`format` rows, placeholders).

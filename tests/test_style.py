@@ -140,6 +140,30 @@ class Model(unittest.TestCase):
         self.assertEqual(held.n, self.model.n - self.model.corpora[0].docs[0].n)
         self.assertIs(self.model.excluding("not-there"), self.model)
 
+    def test_machine_likeness_separates_human_from_machine(self):
+        human = M.build_corpus("h", [doc(f"h{i}", PLAIN * 3) for i in range(5)], chunk=0)
+        machine = M.build_corpus("m", [doc(f"m{i}", CLIPPED * 3) for i in range(5)], chunk=0)
+        ref = M.build_reference(human, [machine])
+        h, _ = M.draft_stats(doc("h", PLAIN * 10))
+        m, _ = M.draft_stats(doc("m", CLIPPED * 10))
+        self.assertLess(M.machine_likeness(h, ref), M.MACHINE_LINE)
+        self.assertGreaterEqual(M.machine_likeness(m, ref), M.MACHINE_LINE)
+        short, _ = M.draft_stats(doc("s", CLIPPED))
+        self.assertIsNone(M.machine_likeness(short, ref))
+        self.assertIsNone(M.machine_likeness(m, None))
+
+    def test_corpus_machine_likeness_skips_chunks(self):
+        human = M.build_corpus("h", [doc(f"h{i}", PLAIN * 3) for i in range(5)], chunk=0)
+        machine = M.build_corpus("m", [doc(f"m{i}", CLIPPED * 3) for i in range(5)], chunk=0)
+        ref = M.build_reference(human, [machine])
+        posts = M.build_corpus("blog", [doc("mine", PLAIN * 10), doc("assisted", CLIPPED * 10)], chunk=0)
+        chunks = M.build_corpus("tweets", [doc(f"t{i}", CLIPPED) for i in range(40)])
+        self.assertTrue(chunks.chunked)
+        rows = M.corpus_machine_likeness(M.Model([posts, chunks]), ref)
+        self.assertEqual({r[1] for r in rows}, {"mine", "assisted"})
+        flagged = [r[1] for r in rows if r[2] >= M.MACHINE_LINE]
+        self.assertEqual(flagged, ["assisted"])
+
     def test_auc(self):
         self.assertEqual(M.auc([2, 3], [0, 1]), 1.0)
         self.assertEqual(M.auc([1], [1]), 0.5)
@@ -226,6 +250,7 @@ class Cli(unittest.TestCase):
             self.assertGreater(res["off"], 0)
             frag = next(f for f in res["features"] if f["id"] == "fragment")
             self.assertEqual(frag["verdict"], "fix")
+            self.assertIn("machine_likeness", res)
 
     def test_bundled_reference_loads(self):
         from writing_style.cli import load_reference

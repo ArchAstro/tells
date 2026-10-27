@@ -395,3 +395,40 @@ def auc(a: list[float], b: list[float]) -> float:
         for y in b:
             s += 1.0 if x > y else 0.5 if x == y else 0.0
     return s / (len(a) * len(b))
+
+
+# ---------------------------------------------------------------- machine-likeness
+
+MACHINE_LINE = 0.6  # at or above: reads as machine-written
+
+
+def machine_likeness(stats: Stats, reference: dict | None, min_sentences: int = 40) -> float | None:
+    """Share of the reference's tell features where a text sits nearer the machines' rate than the human's.
+
+    It doesn't depend on any one author, so it can screen an author's own corpus for
+    drafts an assistant wrote. On the pg-vs-llm essays: PG 0.04-0.39, every model
+    essay 0.61-1.00. None when the text is too short or there is no reference.
+    """
+    if not reference or stats.n < min_sentences:
+        return None
+    hits = []
+    for f, row in reference["features"].items():
+        if not row.get("direction") or f not in FEATURES:
+            continue
+        machine = sum(row[m] for m in reference["machines"]) / len(reference["machines"])
+        r = stats.rate(f)
+        hits.append(abs(r - machine) < abs(r - row["human"]))
+    return sum(hits) / len(hits) if hits else None
+
+
+def corpus_machine_likeness(model: Model, reference: dict | None) -> list[tuple[str, str, float]]:
+    """(corpus, document, score) for every whole document in the model (chunked corpora are skipped)."""
+    out = []
+    for c in model.corpora:
+        if c.chunked:
+            continue
+        for d in c.docs:
+            s = machine_likeness(d, reference)
+            if s is not None:
+                out.append((c.name, d.name, s))
+    return out
