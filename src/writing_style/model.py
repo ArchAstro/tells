@@ -78,6 +78,7 @@ class Corpus:
     examples: dict[str, list[str]]
     chunked: bool = False
     n_files: int = 0
+    verbosity: list[dict] = field(default_factory=list)  # one per doc, aligned with docs
 
     @property
     def n(self) -> int:
@@ -103,6 +104,7 @@ def build_corpus(name: str, docs: list[Doc], weight: float = 1.0, chunk: int | N
         sizes = sorted(len(r) for r in rows) or [0]
         chunk = AUTO_CHUNK if (len(docs) > 30 and sizes[len(sizes) // 2] < 20) else 0
     stats: list[Stats] = []
+    texts: list[list[str]] = []
     if chunk:
         flat = [x for r in rows for x in r]
         for i in range(0, len(flat), chunk):
@@ -112,14 +114,20 @@ def build_corpus(name: str, docs: list[Doc], weight: float = 1.0, chunk: int | N
             else:
                 target = Stats(f"{name} #{len(stats) + 1}")
                 stats.append(target)
+                texts.append([])
             for s, f in part:
                 target.add(s, f)
+                texts[-1].append(s)
     else:
         for d, r in zip(docs, rows):
             s_ = Stats(d.name)
             for s, f in r:
                 s_.add(s, f)
             stats.append(s_)
+            texts.append([s for s, _ in r])
+    from writing_style.verbosity import measure
+
+    keep = [i for i, s_ in enumerate(stats) if s_.n]
     ex: dict[str, list[str]] = {}
     if examples:
         for r in rows:
@@ -133,13 +141,15 @@ def build_corpus(name: str, docs: list[Doc], weight: float = 1.0, chunk: int | N
         for f, bucket in ex.items():  # keep a spread, not the first few
             step = max(len(bucket) // EXAMPLES_PER_FEATURE, 1)
             ex[f] = bucket[::step][:EXAMPLES_PER_FEATURE]
-    return Corpus(name, weight, [s for s in stats if s.n], ex, bool(chunk), len(docs))
+    return Corpus(name, weight, [stats[i] for i in keep], ex, bool(chunk), len(docs),
+                  [measure(texts[i]) for i in keep])
 
 
 @dataclass
 class Model:
     corpora: list[Corpus]
     created: str = ""
+    pairs: dict | None = None  # writing_style.pairs.author_pairs: signature pairs and the AI pairs the author avoids
 
     def save(self, path: Path) -> None:
         data = {
@@ -147,7 +157,9 @@ class Model:
             "created": self.created or datetime.now(timezone.utc).isoformat(timespec="seconds"),
             "features": list(FEATURES),
             "corpora": [{"name": c.name, "weight": c.weight, "chunked": c.chunked, "n_files": c.n_files,
-                         "docs": [d.to_json() for d in c.docs], "examples": c.examples} for c in self.corpora],
+                         "docs": [d.to_json() for d in c.docs], "examples": c.examples,
+                         "verbosity": c.verbosity} for c in self.corpora],
+            "pairs": self.pairs,
         }
         path.write_text(json.dumps(data, indent=1))
 
@@ -157,8 +169,9 @@ class Model:
         if data.get("version") != VERSION:
             raise SystemExit(f"{path}: model version {data.get('version')} is not {VERSION}; rebuild it.")
         corpora = [Corpus(c["name"], c["weight"], [Stats.from_json(d) for d in c["docs"]], c.get("examples", {}),
-                          c.get("chunked", False), c.get("n_files", 0)) for c in data["corpora"]]
-        return cls(corpora, data.get("created", ""))
+                          c.get("chunked", False), c.get("n_files", 0), c.get("verbosity", []))
+                   for c in data["corpora"]]
+        return cls(corpora, data.get("created", ""), data.get("pairs"))
 
     @property
     def n(self) -> int:
@@ -191,9 +204,10 @@ class Model:
         corpora = []
         for i, c in enumerate(self.corpora):
             docs = [d for j, d in enumerate(c.docs) if not (i == corpus_i and j == doc_i)]
+            verb = [v for j, v in enumerate(c.verbosity) if not (i == corpus_i and j == doc_i)]
             if docs:
-                corpora.append(Corpus(c.name, c.weight, docs, c.examples, c.chunked, c.n_files))
-        return Model(corpora)
+                corpora.append(Corpus(c.name, c.weight, docs, c.examples, c.chunked, c.n_files, verb))
+        return Model(corpora, self.created, self.pairs)
 
 
 # ---------------------------------------------------------------- scoring
@@ -309,6 +323,31 @@ def bands(results: list[Calibration], attr: str = "off") -> dict[str, tuple[floa
     for r in results:
         by.setdefault(r.corpus, []).append(getattr(r, attr))
     return {c: (min(v), st.median(v), max(v)) for c, v in by.items()}
+
+
+def verbosity_rows(draft: dict[str, float], model: "Model") -> list[dict]:
+    """The draft's verbosity measures against the range of the author's own documents, per corpus."""
+    from writing_style.verbosity import MEASURES
+
+    rows = []
+    for mid, (label, verbose_when) in MEASURES.items():
+        per = {}
+        for c in model.corpora:
+            vals = [v[mid] for v in c.verbosity if mid in v]
+            if vals:
+                per[c.name] = (min(vals), st.median(vals), max(vals))
+        if not per:
+            continue
+        v = draft[mid]
+        if verbose_when == "higher":
+            verbose = all(v > hi for _, _, hi in per.values())
+            tight = all(v < lo for lo, _, _ in per.values())
+        else:
+            verbose = all(v < lo for lo, _, _ in per.values())
+            tight = all(v > hi for _, _, hi in per.values())
+        rows.append({"id": mid, "label": label, "draft": v, "yours": per,
+                     "verdict": "more verbose" if verbose else "tighter" if tight else "ok"})
+    return rows
 
 
 def draft_stats(doc: Doc) -> tuple[Stats, dict[str, list[str]]]:

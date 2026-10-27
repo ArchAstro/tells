@@ -70,6 +70,26 @@ Verdicts per feature:
    author's own concrete sentences are what carry their voice, so keep their
    words rather than rewriting them.
 
+## 3b. Word pairs and verbosity
+
+`check` also prints two blocks after the feature table:
+
+1. **Word pairs.**
+   - *AI pairs this draft over-uses*: pairs like *is why*, *the thing*, *the
+     obvious*, *is a*, *the person who*. Rephrase those sentences the way the
+     author would say them; don't swap in a synonym of the same shape.
+   - *Your pairs that would usually show up*: the author's own markers. Never paste them in. They
+     come back when the sentences are the author's, so treat a missing pair as
+     a sign the passage needs their words, not a word.
+   - The two per-10k-word rates (your pairs, AI pairs) should sit near the
+     author's, not near the machines'.
+2. **Verbosity.** Six measures against the author's own range. Flags go both
+   ways: *more verbose* (filler, restatement, nominalisations) or *tighter*
+   (too dense, too little repetition). Models usually err tight: clipped,
+   dense, no filler. When a draft is tighter than everything the author
+   wrote, let sentences breathe the way the author does instead of cutting
+   further.
+
 ## 4. Things that read as AI, whatever the model says
 
 Readers spot these quickly. Avoid them even if the numbers are fine:

@@ -68,7 +68,9 @@ def cmd_setup(a) -> None:
 
 
 def cmd_build(a) -> None:
-    corpora = []
+    from writing_style import pairs as P
+
+    corpora, counts = [], []
     for spec in a.corpus:
         name, globs, weight = parse_corpus(spec)
         docs = load_docs(globs, a.exclude)
@@ -76,11 +78,19 @@ def cmd_build(a) -> None:
             raise SystemExit(f"corpus {name}: no files with prose matched {globs}")
         print(f"{name}: {len(docs)} files, {sum(len(d.sentences) for d in docs)} sentences ...", file=sys.stderr)
         corpora.append(M.build_corpus(name, docs, weight, a.chunk))
+        counts.append(P.count(docs))
     model = M.Model(corpora)
+    ref = load_reference(a.reference)
+    if ref and "pairs" in ref:
+        model.pairs = P.author_pairs(P.merge(counts), ref["pairs"])
     model.save(Path(a.out))
     for c in corpora:
         unit = "chunks" if c.chunked else "docs"
         print(f"  {c.name:12} {c.n_files:4} files -> {len(c.docs):3} {unit}, {c.n:5} sentences, weight {c.weight:g}")
+    if model.pairs:
+        sig = ", ".join(r["pair"] for r in model.pairs["signature"][:10])
+        print(f"  your word pairs: {sig} ...")
+        print(f"  AI pairs you rarely use: {', '.join(r['pair'] for r in model.pairs['ai'][:10])} ...")
     print(f"wrote {a.out}")
 
 
@@ -104,6 +114,12 @@ def cmd_check(a) -> None:
         raise SystemExit(f"{a.draft}: not found")
     doc = load(paths[0])
     stats, by_feature = M.draft_stats(doc)
+    from writing_style import pairs as P
+
+    pr = P.draft_report(P.count([doc]), model.pairs) if model.pairs else None
+    from writing_style import verbosity as V
+
+    vrows = M.verbosity_rows(V.measure(doc.sentences), model)
     held_out = model.excluding(doc.name)
     if held_out is not model:
         print(f"note: {doc.name} is in the model; scoring it against the rest.", file=sys.stderr)
@@ -118,6 +134,7 @@ def cmd_check(a) -> None:
             "draft": doc.path, "sentences": stats.n, "mean_words": stats.mean_len,
             "model_mean_words": model.mean_len(), "off": M.n_off(rows), "calibration": bands, "distance": dist, "sd_len": stats.sd_len,
             "calibration_distance": M.bands(cal, "distance"), "calibration_sd_len": M.bands(cal, "sd_len"),
+            "pairs": pr, "verbosity": vrows, "filler_sentences": V.fillers(doc.sentences)[:10],
             "features": [{
                 "id": r.id, "label": FEATURES[r.id].label, "draft": r.draft, "author": r.combined,
                 "per_corpus": r.per_corpus, "z": r.z, "z_per_corpus": r.z_per_corpus, "range": [r.lo, r.hi],
@@ -169,6 +186,17 @@ def cmd_check(a) -> None:
                   f"{', '.join(tells)}")
     off = M.n_off(rows)
     print(f"\n{off} of {len(FEATURES)} features off.")
+    if pr:
+        print_pairs(pr)
+    if vrows:
+        print("\nVerbosity (against the range of your own documents):")
+        for r in vrows:
+            rng = "; ".join(f"{c} {lo:.2f}-{hi:.2f}" for c, (lo, _, hi) in r["yours"].items())
+            flag = "" if r["verdict"] == "ok" else f"  <- {r['verdict']}"
+            print(f"  {r['label']:48} draft {r['draft']:6.2f}   yours: {rng}{flag}")
+        fl = V.fillers(doc.sentences)
+        if fl:
+            print(f"  filler phrases in {len(fl)} sentences, e.g.: {fl[0][:120]}")
     if not cal:
         return
     print("Your own documents, each scored against the rest: " + "; ".join(
@@ -188,6 +216,21 @@ def cmd_check(a) -> None:
               "  put back your own asides, odd sentences and opinions, and vary sentence length.")
 
 
+def print_pairs(pr: dict) -> None:
+    s, ai = pr["signature"], pr["ai"]
+    print("\nWord pairs (per 10,000 words):")
+    print(f"  your pairs        draft {s['draft']:6.1f}   you {s['you']:6.1f}   machines {s['machines']:6.1f}")
+    print(f"  AI pairs          draft {ai['draft']:6.1f}   you {ai['you']:6.1f}   machines {ai['machines']:6.1f}")
+    if pr["over"]:
+        print("  AI pairs this draft over-uses (rephrase in your own words):")
+        for r in pr["over"][:8]:
+            print(f"    {r['pair']:16} {r['count']:3}x  draft {r['draft']:5.1f}   you {r['you']:5.1f}   machines {r['machines']:5.1f}")
+    if pr["missing"]:
+        exp = ", ".join(f"{r['pair']} (~{r['you'] * pr['words'] / 1e4:.0f})" for r in pr["missing"][:8])
+        print(f"  Your pairs that would usually show up by now, and don't: {exp}")
+        print("  Don't paste them in; they come back when the sentences are yours.")
+
+
 def cmd_reference(a) -> None:
     human_name, human_globs, _ = parse_corpus(a.human)
     human = M.build_corpus(human_name, load_docs(human_globs, a.exclude), chunk=0, examples=False)
@@ -196,7 +239,12 @@ def cmd_reference(a) -> None:
         name, globs, _ = parse_corpus(spec)
         machines.append(M.build_corpus(name, load_docs(globs, a.exclude), chunk=0, examples=False))
         print(f"{name}: {len(machines[-1].docs)} docs", file=sys.stderr)
+    from writing_style import pairs as P
+
     ref = M.build_reference(human, machines, a.min_gap)
+    human_counts = P.count(load_docs(human_globs, a.exclude))
+    machine_counts = {parse_corpus(spec)[0]: P.count(load_docs(parse_corpus(spec)[1], a.exclude)) for spec in a.machine}
+    ref["pairs"] = P.build_reference(human_counts, machine_counts)
     ref["note"] = a.note or ""
     Path(a.out).write_text(json.dumps(ref, indent=1))
     tells = {f: v["direction"] for f, v in ref["features"].items() if v["direction"]}
@@ -267,6 +315,8 @@ def main(argv: list[str] | None = None) -> None:
     b.add_argument("--chunk", type=int, default=None,
                    help="pack sentences into chunks of N (default: automatic for many short docs)")
     b.add_argument("-o", "--out", default="style-model.json")
+    b.add_argument("-r", "--reference", default=DEFAULT_REFERENCE,
+                   help="machine reference for word pairs: a JSON path, pg-vs-llm (default) or none")
     b.set_defaults(fn=cmd_build)
 
     c = sub.add_parser("check", help="score a draft against a model")

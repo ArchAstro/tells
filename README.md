@@ -51,14 +51,23 @@ measured all of them against 50 of his.
    generated writing clusters. `check` measures this for any draft.
 
    ![Each essay's distance from its own author's average: Paul Graham median 0.82, the models 0.56 to 0.66; and sentence-length spread, where Codex and Grok are much flatter than Paul Graham](docs/img/uniformity.svg)
-5. **PG speculates; the models define.** Same topics, different word pairs.
+5. **The models aren't wordy. They're compressed.** The usual complaint
+   about AI prose is padding, but most model essays contain no filler
+   phrases at all (PG: about one per 1,000 words). They repeat the previous
+   sentence less, and Codex packs far more content words into each sentence.
+   The brief discouraged hedging, so the filler gap is partly steered; the
+   rest wasn't asked for. Clipped, dense prose is its own tell, so `check`
+   flags drafts that are tighter than the author as well as wordier.
+
+   ![Filler phrases, sentence-to-sentence repetition and content density per essay: Paul Graham has more filler and more repetition than every model, and Codex is far denser](docs/img/verbosity.svg)
+6. **PG speculates; the models define.** Same topics, different word pairs.
    He hedges and looks ahead: *would be*, *it will*, *at least*, *a lot*,
    *not just*. Every model leans on *is a*, *the thing*, *the person who*,
    *is why*, *the obvious*. Run `writing-style pairs` to find the same thing
    for any writer.
 
    ![Word pairs per 10,000 words. Paul Graham uses to be, a lot, there are, would be, at least and it will far more than every model; every model uses the person, the same, the obvious, is a, the work and the thing far more than he does](docs/img/pairs.svg)
-6. **The brief backfired where it was explicit.** Told "almost no em dashes",
+7. **The brief backfired where it was explicit.** Told "almost no em dashes",
    the models used none (PG uses them). Told "you more than I", they said *I*
    at a quarter of his rate or less. Told "~15 words", they wrote shorter.
    They follow instructions harder than the writer they're imitating.
@@ -144,6 +153,16 @@ so treat this one as a demo, not a test.)
    author's average, which reads as generated. `check` compares the draft's
    distance from the average, and the spread of its sentence lengths, with
    the author's own documents, and warns when a draft is too smooth.
+6. **Word pairs.** `build` finds the author's signature pairs (ones they use
+   far more than the reference models: *would be*, *at least*, *a lot* for
+   Paul Graham) and the AI pairs they avoid (*is why*, *the thing*, *the obvious*).
+   `check` lists AI pairs the draft over-uses and signature pairs a draft
+   this long would usually contain. Don't paste the missing ones in; they
+   come back when the sentences are the author's.
+7. **Verbosity.** Six measures per document: content density, filler
+   phrases, nominalisations, sentence-to-sentence restatement, vocabulary
+   variety and compressibility. `check` flags a draft that is wordier *or*
+   tighter than every document the author wrote.
 
 ## Use it
 

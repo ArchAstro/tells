@@ -167,6 +167,46 @@ class Pairs(unittest.TestCase):
         self.assertIn(("the", "founder"), dict(P.consistent([P.log_odds(a, b)], a, drop_topic=False)))
 
 
+class Verbosity(unittest.TestCase):
+    def test_padding_scores_wordier_than_plain(self):
+        from writing_style.verbosity import measure
+
+        plain = measure(["The server settles the job.", "I wrote the scheduler in a week.", "Tests run on push."] * 4)
+        padded = measure(["In order to settle the job, the server is able to do the settlement.",
+                          "It is worth noting that the fact that the server does the settlement matters.",
+                          "In other words, the server does the settlement of the job."] * 4)
+        self.assertGreater(padded["filler"], plain["filler"])
+        self.assertGreater(padded["nominal"], plain["nominal"])
+        self.assertGreater(padded["restate"], plain["restate"])
+
+    def test_rows_flag_both_directions(self):
+        blog = M.build_corpus("blog", [doc(f"b{i}", PLAIN * 5) for i in range(4)])
+        model = M.Model([blog])
+        from writing_style.verbosity import measure
+
+        rows = {r["id"]: r for r in M.verbosity_rows(measure(["In order to do it, the fact that it is done matters."] * 8), model)}
+        self.assertEqual(rows["filler"]["verdict"], "more verbose")
+
+
+class PairsInModel(unittest.TestCase):
+    def test_draft_report_flags_ai_pairs_and_missing_signature(self):
+        from writing_style import pairs as P
+
+        ap = {"words": 1000, "signature": [{"pair": "i think", "you": 50.0, "machines": 1.0}],
+              "ai": [{"pair": "the thing", "you": 1.0, "machines": 20.0}]}
+        draft = P.count([doc("d", ["The thing is the thing that matters most here today."] * 60)])
+        rep = P.draft_report(draft, ap)
+        self.assertEqual(rep["over"][0]["pair"], "the thing")
+        self.assertEqual(rep["missing"][0]["pair"], "i think")
+
+    def test_bundled_reference_has_pairs(self):
+        from writing_style.cli import load_reference
+
+        ref = load_reference("pg-vs-llm")
+        self.assertIn("is why", [r["pair"] for r in ref["pairs"]["ai"]])
+        self.assertGreater(ref["pairs"]["machine_total"], 100000)
+
+
 class Cli(unittest.TestCase):
     def test_build_and_check(self):
         with tempfile.TemporaryDirectory() as d:
