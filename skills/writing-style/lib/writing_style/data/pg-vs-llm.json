@@ -20,11 +20,11 @@
   },
   "that_relative_clause": {
    "human": 0.06191205425508641,
-   "Claude Opus 5": 0.08278145695364239,
+   "Claude Opus 5": 0.08314937454010302,
    "Codex Terra": 0.05361842105263158,
    "Grok 4.6": 0.06548470117243352,
    "auc": {
-    "Claude Opus 5": 0.6888,
+    "Claude Opus 5": 0.6896,
     "Codex Terra": 0.4276,
     "Grok 4.6": 0.5276
    },
@@ -68,11 +68,11 @@
   },
   "noun_appositive_that": {
    "human": 0.0177204112885583,
-   "Claude Opus 5": 0.01545253863134658,
+   "Claude Opus 5": 0.015084621044885945,
    "Codex Terra": 0.017434210526315788,
    "Grok 4.6": 0.007148984844152131,
    "auc": {
-    "Claude Opus 5": 0.496,
+    "Claude Opus 5": 0.4936,
     "Codex Terra": 0.5292,
     "Grok 4.6": 0.33
    },

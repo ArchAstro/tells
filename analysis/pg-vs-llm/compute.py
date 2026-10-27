@@ -19,6 +19,7 @@ from writing_style import pairs as P
 from writing_style.verbosity import measure as verbosity
 from writing_style.features import FEATURES
 from writing_style.sources import expand, load
+from writing_style.cli import load_reference
 
 CORPORA = {
     "pg": ("Paul Graham", "human/paul_graham"),
@@ -30,6 +31,7 @@ MODELS = ["claude", "codex", "grok"]
 # The style brief told the models to hit these, so differences there measure obedience.
 STEERED = {"em_dash", "first_person", "second_person", "long_sentence", "short_sentence", "clausal_coordination"}
 FEATS = list(FEATURES)
+REF = load_reference("pg-vs-llm")
 
 
 def main(root: Path, out: Path) -> None:
@@ -130,6 +132,10 @@ def main(root: Path, out: Path) -> None:
         "verbosity_auc": {mid: {m: M.auc([v[mid] for v in verb[m]], [v[mid] for v in verb["pg"]]) for m in MODELS}
                           for mid in verb["pg"][0]},
         "model_id": {"accuracy": hits / len(names), "confusion": confusion},
+        # in-sample: the bundled reference was built from these same essays; essays under
+        # 40 sentences are skipped, as `check` and `build` skip them
+        "machine_likeness": {k: [x for x in (M.machine_likeness(s, REF) for s in v) if x is not None]
+                             for k, v in essays.items()},
     }
     out.write_text(json.dumps(data, indent=1))
     print(f"wrote {out}; model-vs-model nearest-centroid accuracy {hits / len(names):.2f}", file=sys.stderr)

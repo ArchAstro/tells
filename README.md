@@ -29,11 +29,11 @@ measured all of them against 50 of his.
 
    | per 100 sentences | PG | Models |
    |---|---:|---:|
-   | purpose clause (*to see why*) | 17.4 | 5–7 |
-   | *wanted to / had to* | 15.4 | 6–8 |
+   | purpose clause (*to see why*) | 17.2 | 5–7 |
+   | *wanted to / had to* | 15.2 | 6–8 |
    | conditional *if* | 9.4 | 4–7 |
    | questions | 3.8 | 0.4–1.7 |
-   | imperative | 0.7 | 1.8–3.5 |
+   | imperative | 0.8 | 1.8–3.5 |
    | gerund object (*started building*) | 1.2 | 2.7–3.2 |
 
    PG explains why and wonders out loud. The models tell you what to do.
@@ -67,7 +67,16 @@ measured all of them against 50 of his.
    for any writer.
 
    ![Word pairs per 10,000 words. Paul Graham uses to be, a lot, there are, would be, at least and it will far more than every model; every model uses the person, the same, the obvious, is a, the work and the thing far more than he does](docs/img/pairs.svg)
-7. **The brief backfired where it was explicit.** Told "almost no em dashes",
+7. **One number sorts them.** For each of the AI tells above, ask whether an
+   essay sits nearer the models' rate or PG's. The share nearer the models is
+   its *machine-likeness*: every PG essay scores 0.39 or less, every model
+   essay 0.61 or more. It measures how sentences are built, so it can't be
+   gamed by borrowing someone's favourite words, and it doesn't depend on any
+   one author. `build` uses it to screen a corpus and `check` reports it for a
+   draft.
+
+   ![Machine-likeness per essay: Paul Graham's essays between 0.04 and 0.39, every model essay between 0.61 and 1.0](docs/img/machine.svg)
+8. **The brief backfired where it was explicit.** Told "almost no em dashes",
    the models used none (PG uses them). Told "you more than I", they said *I*
    at a quarter of his rate or less. Told "~15 words", they wrote shorter.
    They follow instructions harder than the writer they're imitating.
@@ -218,6 +227,32 @@ stripped.
 The code lives in `skills/writing-style/lib/writing_style`. `uv run pytest`
 runs the tests; `uv run writing-style ...` runs the CLI from the checkout.
 
+## Lessons from using it on a real draft
+
+We used the tool to revise a long blog post toward its author's voice, and
+checked the results with an outside AI detector. What we learned:
+
+1. **Agent-written posts in the corpus poison the model.** Three of the
+   author's eight "own" posts had been drafted by an assistant. The model
+   learned the assistant's clipped style and told us to add short sentences
+   and fragments, so every revision drifted further from the author. Building
+   from the posts the author actually published, and screening with
+   machine-likeness, fixed it. `build` now warns about such documents.
+2. **Zero flags doesn't mean human.** A draft tuned until nothing was off
+   still scored 91% AI on the detector. Rates can be matched sentence by
+   sentence while the structure stays machine-made.
+3. **Borrowed words fool the counts, not the reader.** Sprinkling the
+   author's signature words into assistant sentences raised the word-pair
+   score to the author's level; machine-likeness and the detector didn't move.
+4. **Cutting for length brings the assistant back.** An assistant's cut
+   compresses: denser words, more varied vocabulary, fewer "to …" clauses,
+   fewer "So" and "And" openers. If the author writes loosely, keep the
+   looseness and cut whole ideas.
+5. **What moved the needle was structure.** Putting back the author's
+   purpose clauses and first person, and dropping punchline fragments,
+   brought machine-likeness from 0.61 to 0.52 (the author's posts: 0.35–0.48),
+   and a detector sample of the opening came back human.
+
 ## Find someone's word pairs
 
 ```sh
@@ -253,6 +288,9 @@ $ws check draft.md -m me.json -r ref.json
 3. Small corpora give wide ranges. Eight documents is about the minimum.
 4. The PG reference is one author and one brief. It shows how these models
    missed that writer, not how to detect AI text in general.
+5. Machine-likeness was calibrated on the essays the reference was built from
+   (in-sample) and checked on one other author's published posts. Texts under
+   40 sentences aren't scored. Treat 0.6 as a prompt to ask, not a verdict.
 
 ## Develop
 

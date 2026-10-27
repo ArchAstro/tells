@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+import os
+import subprocess
+import sys
 import unittest
 
 from writing_style.grammar.classify import classify
@@ -164,6 +167,22 @@ class GrammarEssayGold(unittest.TestCase):
         self.assertIn("locative_inversion", ids("Into the room walked the founder."))
         self.assertIn("object_fronting", ids("This I cannot accept."))
         self.assertNotIn("object_fronting", ids("This is a book."))
+
+
+
+class Determinism(unittest.TestCase):
+    def test_wordnet_lookup_ignores_hash_seed(self):
+        # words with more than one WordNet form (inflection, exception list): their sense order once came from a set
+        code = ("from writing_style.grammar.tokens import _pack\n"
+                "words = [('saw', 'VBD'), ('left', 'VBD'), ('found', 'VBD'), ('leaves', 'NNS'), ('axes', 'NNS'),\n"
+                "         ('bases', 'NNS'), ('lay', 'VBD'), ('felt', 'VBD'), ('better', 'JJR'), ('ground', 'VBN')]\n"
+                "print([_pack(w, p)[:4] for w, p in words])")
+        outs = set()
+        for seed in ("1", "2", "3", "4"):
+            env = {**os.environ, "PYTHONHASHSEED": seed}
+            outs.add(subprocess.run([sys.executable, "-c", code], env=env, capture_output=True, text=True,
+                                    check=True).stdout)
+        self.assertEqual(len(outs), 1)
 
 
 if __name__ == "__main__":

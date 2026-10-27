@@ -270,6 +270,38 @@ for mid, title, unit in (("filler", "Filler phrases (in order to, the fact that,
     verb_rows.append([escape(title)] + [f"{st.median(vals[k]):.3f}" for k in KEYS])
 table_verb = table(["Measure (median)"] + [NAME[k] for k in KEYS], verb_rows)
 
+# ---------------------------------------------------------------- 4c. machine-likeness
+ml = {k: D["machine_likeness"][k] for k in KEYS}
+LINE = 0.6
+
+
+def px(v):
+    return PL + v * (PW - PL - PR)
+
+
+title = "Share of the AI tells where each essay sits nearer the models than Paul Graham"
+g = [f'<text x="0" y="14" class="ptitle">{escape(title)}</text>',
+     f'<rect x="{px(LINE)}" y="26" width="{px(1) - px(LINE)}" height="{PH - 52}" class="band"/>',
+     f'<text x="{px(1)}" y="40" class="note" text-anchor="end">reads as machine-written</text>',
+     f'<text x="{PW - PR + 6}" y="30" class="note">median</text>']
+for i in range(6):
+    v = i / 5
+    g.append(f'<line x1="{px(v)}" x2="{px(v)}" y1="26" y2="{PH - 26}" class="grid"/>'
+             f'<text x="{px(v)}" y="{PH - 10}" class="tick" text-anchor="middle">{v:.1f}</text>')
+for r, k in enumerate(KEYS):
+    y = 52 + r * 26
+    g.append(f'<text x="{PL - 12}" y="{y + 4}" class="tick" text-anchor="end">{escape(NAME[k])}</text>')
+    for i, v in enumerate(ml[k]):
+        g.append(ring(px(v), y + jitter(i) * 7, k, f"{NAME[k]}, essay {i + 1}: {v:.2f}", 3.6))
+    m = st.median(ml[k])
+    g.append(f'<line x1="{px(m)}" x2="{px(m)}" y1="{y - 11}" y2="{y + 11}" class="med"/>'
+             f'<text x="{PW - PR + 6}" y="{y + 4}" class="val">{m:.2f}</text>')
+ml_svg = svg(PW, PH + 10, title, g, "machine")
+table_ml = table(["", *[NAME[k] for k in KEYS]],
+                 [["lowest"] + [f"{min(ml[k]):.2f}" for k in KEYS],
+                  ["median"] + [f"{st.median(ml[k]):.2f}" for k in KEYS],
+                  ["highest"] + [f"{max(ml[k]):.2f}" for k in KEYS]])
+
 # ---------------------------------------------------------------- 5. word pairs
 pair_svgs, pair_rows = [], []
 for title, rows in (("Paul Graham uses these more than every model", D["pairs"]["pg_more"][:12]),
@@ -453,6 +485,19 @@ gap is partly steered; the rest wasn't asked for.) Clipped, dense prose is its o
 </section>
 
 <section class="card">
+<h2>One number that sorts them</h2>
+<p>Take every feature where all three models lean the same way, and ask of each essay: is it nearer the models' rate
+or Paul Graham's? The share of features where it's nearer the models is its machine-likeness. Every model essay
+scores {min(min(ml[m]) for m in MODELS):.2f} or more; every Paul Graham essay {max(ml["pg"]):.2f} or less. These are
+the essays the reference was built from, so the gap here is a best case. On a different author's published posts,
+which the reference has never seen, it still put them below 0.5 and posts an assistant had drafted above 0.7.
+It measures how sentences are built, so it can't be fooled by sprinkling in someone's favourite words.</p>
+{legend()}
+<div class="wide">{ml_svg}</div>
+{table_ml}
+</section>
+
+<section class="card">
 <h2>Paul Graham speculates; the models define</h2>
 <p>Word pairs that every model uses more than Paul Graham, or he uses more than every model, in at least 8 essays
 (subject nouns like "the founder" left out). He hedges and looks ahead: <i>would be</i>, <i>it will</i>, <i>at least</i>,
@@ -533,6 +578,7 @@ TITLES = {
     "fingerprint": ("Where each model differs from Paul Graham", "In units of PG's own essay-to-essay spread."),
     "accents": ("Each model has its own accent", "Where each model is furthest from the other two (per 100 sentences)."),
     "verbosity": ("The models aren't wordy. They're compressed.", "Each dot is an essay; the bar is the median."),
+    "machine": ("One number that sorts them", "Machine-likeness: share of AI tells where an essay sits nearer the models. Shaded: 0.6+."),
     "pairs": ("Paul Graham speculates; the models define", "Word pairs per 10,000 words, in at least 8 essays."),
     "told": ("Where the brief gave a rule, the models overshot it", "Dashed line: what the brief asked for."),
 }
@@ -574,7 +620,7 @@ def standalone(key, side_by_side=False, gap=16, pad=20):
     (IMG / f"{key}.svg").write_text(out)
 
 
-for key in ("map", "uniformity", "fingerprint", "verbosity", "pairs", "told"):
+for key in ("map", "uniformity", "fingerprint", "verbosity", "machine", "pairs", "told"):
     standalone(key)
 standalone("accents", side_by_side=True)
 print("wrote", IMG)

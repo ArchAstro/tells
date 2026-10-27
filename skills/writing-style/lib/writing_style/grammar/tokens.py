@@ -95,13 +95,10 @@ def _pack(word: str, penn: str) -> tuple:
     wn_pos = PENN_TO_WN.get(penn)
     if wn_pos is None:
         return word, None, (), None, frozenset(), frozenset(), ()
-    forms = {word}
+    # ordered, not a set: synset order decides first_lex, and set order changes with every run's hash seed
     morphed = wn.morphy(word, wn_pos)
-    if morphed:
-        forms.add(morphed)
     exc = wn._exception_map.get(wn_pos, {})
-    if word in exc:
-        forms.update(exc[word])
+    forms = list(dict.fromkeys([word, *([morphed] if morphed else []), *exc.get(word, [])]))
     syns = []
     seen = set()
     for form in forms:

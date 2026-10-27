@@ -45,22 +45,29 @@ source of the `pg-vs-llm` reference that `writing-style check` uses.
    "green list" layer uses GPT-2 token keys, so it measures vocabulary, not a
    watermark; grammar results were never saved; outputs were deleted from the
    working tree.
+7. **Hash order.** The original grammar code (and this repo's, until we found
+   it) gathered a word's WordNet forms in a Python set. A set of strings
+   iterates in a different order in every process, and that order decided
+   which sense came first, so a few sentences changed features from run to
+   run: rates moved by up to ~0.8 per 100 sentences. Fixed here by keeping
+   the forms in order; two full runs are now byte-identical.
+   `results/audit_grammar.json` is from the original code and keeps that noise.
 
 ## Where the models miss, in grammar
 
-Per 100 sentences. PG does more of the first group in every comparison; every
-model does more of the second.
+Per 100 sentences, from this repo's classifier (`results/essays.json`). PG does
+more of the first group in every comparison; every model does more of the second.
 
 | Structure | PG | Models |
 |---|---:|---:|
-| purpose infinitive (*to see why*) | 17.4 | 5–7 |
-| infinitival complement (*wanted to*) | 15.4 | 6–8 |
-| zero relative (*the thing ∅ you built*) | 26.9 | 12–21 |
+| purpose infinitive (*to see why*) | 17.2 | 5–7 |
+| infinitival complement (*wanted to*) | 15.2 | 6–8 |
+| zero relative (*the thing ∅ you built*) | 26.1 | 12–21 |
 | conditional *if* | 9.4 | 4–7 |
 | *there is / there are* | 3.4 | ~1 |
 | questions (yes/no + wh-) | 3.8 | 0.4–1.7 |
 | concessive (*although*) | 0.8 | 0–0.1 |
-| imperative | 0.7 | 1.8–3.5 |
+| imperative | 0.8 | 1.8–3.5 |
 | gerund complement (*started building*) | 1.2 | 2.7–3.2 |
 | ditransitive (*gave them X*) | 1.1 | 1.8–2.2 |
 
