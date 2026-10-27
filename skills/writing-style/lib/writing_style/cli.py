@@ -10,7 +10,6 @@ from __future__ import annotations
 
 import argparse
 import json
-import shutil
 import sys
 from importlib import resources
 from pathlib import Path
@@ -288,19 +287,6 @@ def cmd_features(a) -> None:
         print(f"  {fid:28} {f.label}")
 
 
-def cmd_install_skill(a) -> None:
-    src = resources.files("writing_style").joinpath("skill")
-    dest = Path(a.dest).expanduser() / "writing-style"
-    if dest.exists() or dest.is_symlink():
-        if not a.force:
-            raise SystemExit(f"{dest} exists; pass --force to replace it")
-        shutil.rmtree(dest) if dest.is_dir() and not dest.is_symlink() else dest.unlink()
-    dest.parent.mkdir(parents=True, exist_ok=True)
-    with resources.as_file(src) as path:
-        shutil.copytree(path, dest)
-    print(f"installed the skill to {dest}")
-
-
 def main(argv: list[str] | None = None) -> None:
     p = argparse.ArgumentParser(prog="writing-style", description=__doc__,
                                 formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -353,11 +339,6 @@ def main(argv: list[str] | None = None) -> None:
     w.set_defaults(fn=cmd_pairs)
 
     sub.add_parser("features", help="list what is measured").set_defaults(fn=cmd_features)
-
-    s = sub.add_parser("install-skill", help="copy the agent skill into your skills folder")
-    s.add_argument("--dest", default="~/.claude/skills")
-    s.add_argument("--force", action="store_true")
-    s.set_defaults(fn=cmd_install_skill)
 
     a = p.parse_args(argv)
     a.fn(a)

@@ -9,12 +9,23 @@ description: Check a draft against a statistical model of how its author actuall
 WordNet-backed classifier, 16 surface habits) across the author's own writing,
 then tells you which features a draft over- or under-uses.
 
-## 0. Install
+## 0. Running it
+
+Everything ships inside this skill; there is nothing to install. Run the CLI
+through the script in this skill's base directory:
 
 ```sh
-command -v writing-style || uv tool install git+https://github.com/ArchAstro/writing-style
-writing-style setup        # downloads WordNet + tagger once, into ~/.cache/writing-style
+bash <skill-dir>/scripts/writing-style --help
 ```
+
+`<skill-dir>` is this skill's base directory (shown when the skill loads).
+The commands below write `writing-style` for short; always run them as
+`bash <skill-dir>/scripts/writing-style ...`.
+
+The first run makes a private Python environment in
+`~/.cache/writing-style/venv` (needs `python3` 3.9+, takes ~20 s), and the
+first command that reads text fetches WordNet and the tagger into
+`~/.cache/writing-style/nltk_data`. Both happen once, by themselves.
 
 ## 1. Build the model from the author's own writing only
 

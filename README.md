@@ -166,28 +166,19 @@ so treat this one as a demo, not a test.)
 
 ## Use it
 
-```sh
-uv tool install git+https://github.com/ArchAstro/writing-style
-writing-style setup          # WordNet + tagger, once, into ~/.cache/writing-style
-
-writing-style build -c 'blog=~/blog/*.md' -c tweets=~/archive/tweets -x '~/blog/draft*.md' -o me.json
-writing-style calibrate me.json
-writing-style check draft.md -m me.json            # or --json, --all
-```
-
-`-c name=glob[,glob][@weight]` adds a corpus. Use only writing the author did
-themselves: drafts an assistant helped with pull the model toward the
-assistant. Tweets are recognised by their front matter (`conversation_id:` or
-an x.com `url:`); quoted tweets, links, @handles and `1/` numbering are
-stripped.
-
-## Use it from an agent
+It's an agent skill. Install it with [skills](https://github.com/vercel-labs/skills):
 
 ```sh
-writing-style install-skill          # copies the skill to ~/.claude/skills/writing-style
+npx skills add ArchAstro/writing-style
 ```
 
-The skill (`src/writing_style/skill/SKILL.md`) tells the agent to:
+Then ask your agent to "check this draft against how I write" or run
+`/writing-style`. There's no Python package to install: the skill carries its
+own code, and its first run sets up a private Python environment in
+`~/.cache/writing-style` (needs `python3` 3.9+) and fetches WordNet and the
+tagger there.
+
+The skill tells the agent to:
 
 1. build the model from the author's own writing only;
 2. fix `FIX` rows in small batches and re-check after each (rewrites overcorrect);
@@ -196,10 +187,32 @@ The skill (`src/writing_style/skill/SKILL.md`) tells the agent to:
 5. avoid the patterns that read as AI whatever the numbers say;
 6. report a before/after table.
 
+### From a shell
+
+The same CLI is the skill's script (adjust the path to wherever your agent keeps skills):
+
+```sh
+ws=~/.claude/skills/writing-style/scripts/writing-style
+$ws build -c 'blog=~/blog/*.md' -c tweets=~/archive/tweets -x '~/blog/draft*.md' -o me.json
+$ws calibrate me.json
+$ws check draft.md -m me.json            # or --json, --all
+```
+
+`-c name=glob[,glob][@weight]` adds a corpus. Use only writing the author did
+themselves: drafts an assistant helped with pull the model toward the
+assistant. Tweets are recognised by their front matter (`conversation_id:` or
+an x.com `url:`); quoted tweets, links, @handles and `1/` numbering are
+stripped.
+
+### Working on it
+
+The code lives in `skills/writing-style/lib/writing_style`. `uv run pytest`
+runs the tests; `uv run writing-style ...` runs the CLI from the checkout.
+
 ## Find someone's word pairs
 
 ```sh
-writing-style pairs -a 'me=~/blog/*.md' -b 'claude=drafts/claude' -b 'gpt=drafts/gpt'
+$ws pairs -a 'me=~/blog/*.md' -b 'claude=drafts/claude' -b 'gpt=drafts/gpt'
 ```
 
 Lists the word pairs the `-a` writing uses far more than every `-b` corpus,
@@ -218,8 +231,8 @@ off in the direction all three models lean. Features the brief itself steered
 any human and machine corpora:
 
 ```sh
-writing-style reference --human 'me=~/essays' --machine 'claude=gen/claude' --machine 'gpt=gen/gpt' -o ref.json
-writing-style check draft.md -m me.json -r ref.json
+$ws reference --human 'me=~/essays' --machine 'claude=gen/claude' --machine 'gpt=gen/gpt' -o ref.json
+$ws check draft.md -m me.json -r ref.json
 ```
 
 ## Limits

@@ -1,0 +1,39 @@
+#!/usr/bin/env bash
+# Runs the writing-style CLI that ships inside this skill.
+#
+# The first run makes a private Python environment (nltk + certifi) in
+# ~/.cache/writing-style/venv; the first command that reads text then fetches
+# WordNet and the tagger into ~/.cache/writing-style/nltk_data. Nothing else is
+# installed. Set WRITING_STYLE_HOME to put both somewhere else.
+set -euo pipefail
+
+skill="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd -P)"
+home="${WRITING_STYLE_HOME:-${XDG_CACHE_HOME:-$HOME/.cache}/writing-style}"
+venv="$home/venv"
+deps="nltk>=3.9 certifi"
+
+if [ ! -x "$venv/bin/python" ] || [ "$(cat "$venv/.deps" 2>/dev/null)" != "$deps" ]; then
+  py=""
+  for c in python3.13 python3.12 python3.11 python3.10 python3.9 python3; do
+    if command -v "$c" >/dev/null 2>&1 && "$c" -c 'import sys, venv; sys.exit(sys.version_info < (3, 9))' 2>/dev/null; then
+      py="$c"
+      break
+    fi
+  done
+  if [ -z "$py" ]; then
+    echo "writing-style needs Python 3.9 or newer on PATH (python3)." >&2
+    exit 1
+  fi
+  echo "writing-style: setting up Python in $venv (first run only)" >&2
+  rm -rf "$venv"
+  mkdir -p "$home"
+  if ! "$py" -m venv "$venv" >&2; then
+    echo "writing-style: '$py -m venv' failed; on Debian/Ubuntu install python3-venv." >&2
+    exit 1
+  fi
+  "$venv/bin/python" -m pip install --quiet --disable-pip-version-check $deps >&2
+  echo "$deps" > "$venv/.deps"
+fi
+
+export WRITING_STYLE_NLTK_DATA="${WRITING_STYLE_NLTK_DATA:-$home/nltk_data}"
+PYTHONPATH="$skill/lib${PYTHONPATH:+:$PYTHONPATH}" exec "$venv/bin/python" -m writing_style "$@"

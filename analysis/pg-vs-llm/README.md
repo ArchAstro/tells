@@ -10,7 +10,7 @@ source of the `pg-vs-llm` reference that `writing-style check` uses.
 2. **Machines**: 25 essays each from Claude Opus 5, Codex Terra and Grok 4.6,
    all from one long style brief (`style-brief.md`) on PG's topics.
 3. **Measures**: surface stylometry per essay, 40 grammar structures per
-   sentence (the classifier in `src/writing_style/grammar`), pairwise AUC with
+   sentence (the classifier in `skills/writing-style/lib/writing_style/grammar`), pairwise AUC with
    cross-validation, and three nulls.
 
 ## What the audit found
