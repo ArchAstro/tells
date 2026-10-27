@@ -71,7 +71,12 @@ def legend():
     return '<div class="legend">' + "".join(out) + "</div>"
 
 
-def svg(w, h, label, body):
+PARTS = {}  # key -> list of (w, h, body) panels, for the standalone README images
+
+
+def svg(w, h, label, body, key=None):
+    if key:
+        PARTS.setdefault(key, []).append((w, h, "".join(body)))
     return f'<svg viewBox="0 0 {w} {h}" role="img" aria-label="{escape(label)}">{"".join(body)}</svg>'
 
 
@@ -120,7 +125,7 @@ for k in KEYS:
     else:
         ly, dy = my(min(ys)), 20
     g.append(f'<text x="{mx(cx)}" y="{ly + dy}" class="dl" text-anchor="middle">{escape(NAME[k])}</text>')
-chart_map = svg(W, H, "Map of every essay by writing features", g)
+chart_map = svg(W, H, "Map of every essay by writing features", g, "map")
 ex = D["pca"]["explained"]
 table_map = table(["Group", "Essays", "Centre (x, y)"],
                   [[escape(NAME[k]), D["n"][k], f"{cent[k][0]:.2f}, {cent[k][1]:.2f}"] for k in KEYS])
@@ -155,7 +160,7 @@ for title, key, mult, unit, lo, hi in panels:
         g.append(f'<line x1="{px(m)}" x2="{px(m)}" y1="{y - 12}" y2="{y + 12}" class="med"/>'
                  f'<text x="{PW - PR + 6}" y="{y + 4}" class="val">{m:.2f}</text>')
     g.append(f'<text x="{PW - PR + 6}" y="30" class="note">median</text>')
-    uni_svgs.append(svg(PW, PH, title, g) + f'<p class="unit">{escape(unit)}</p>')
+    uni_svgs.append(svg(PW, PH, title, g, "uniformity") + f'<p class="unit">{escape(unit)}</p>')
     uni_rows.append([escape(title)] + [f"{st.median(vals[k]):.2f}" for k in KEYS])
 table_uni = table(["Measure (median)"] + [NAME[k] for k in KEYS], uni_rows)
 u = {k: st.median(D["uniformity"][k]) for k in KEYS}
@@ -201,7 +206,7 @@ for group, feats in (("", unsteered), ("The brief told the models to change thes
         fp_rows.append([escape(short(f)) + (" *" if FP[f]["steered"] else "")]
                        + [f"{FP[f]['mean'][k] * 100:.1f}" for k in KEYS] + [f"{d[m]:+.1f}" for m in MODELS])
         y += RH
-chart_fp = svg(FW, FH + 6, "Feature differences from Paul Graham", g)
+chart_fp = svg(FW, FH + 6, "Feature differences from Paul Graham", g, "fingerprint")
 table_fp = table(["Feature (per 100 sentences)"] + [NAME[k] for k in KEYS] + [f"{NAME[m]} Δ" for m in MODELS], fp_rows)
 
 # ---------------------------------------------------------------- 4. signatures
@@ -228,13 +233,43 @@ for m in MODELS:
         yy += 22
         sig_rows.append([escape(NAME[m]), escape(short(s["id"]))] + [f"{vals[k]:.1f}" for k in KEYS])
     sig_cards.append(f'<div class="sig"><h3><svg viewBox="0 0 14 14"><circle cx="7" cy="7" r="5" class="m {SLOT[m]}"/>'
-                     f'</svg>{escape(NAME[m])}</h3>{svg(SW, yy, NAME[m] + " signature", g)}</div>')
+                     f'</svg>{escape(NAME[m])}</h3>{svg(SW, yy, NAME[m] + " signature", g, "accents")}</div>')
 table_sig = table(["Model", "Feature (per 100 sentences)"] + [NAME[k] for k in KEYS], sig_rows)
 acc = D["model_id"]["accuracy"]
 conf = D["model_id"]["confusion"]
 right = sum(conf[m][m] for m in MODELS)
 
-# ---------------------------------------------------------------- 5. told vs did
+# ---------------------------------------------------------------- 5. word pairs
+pair_svgs, pair_rows = [], []
+for title, rows in (("Paul Graham uses these more than every model", D["pairs"]["pg_more"][:12]),
+                    ("Every model uses these more than Paul Graham", D["pairs"]["models_more"][:12])):
+    top = -(-max(max(r["per10k"].values()) for r in rows) // 10) * 10  # round up to a multiple of 10
+    QL, QR, QH = 120, 40, 34 + len(rows) * 24 + 30
+
+    def qx(v, top=top):
+        return QL + v / top * (PW - QL - QR)
+
+    g = [f'<text x="0" y="14" class="ptitle">{escape(title)}</text>',
+         f'<text x="{PW - QR}" y="14" class="note" text-anchor="end">per 10,000 words</text>']
+    step = 10 if top <= 60 else 20
+    for t in range(0, int(top) + 1, step):
+        g.append(f'<line x1="{qx(t)}" x2="{qx(t)}" y1="24" y2="{QH - 26}" class="grid"/>'
+                 f'<text x="{qx(t)}" y="{QH - 10}" class="tick" text-anchor="middle">{t}</text>')
+    for r_i, r in enumerate(rows):
+        y = 38 + r_i * 24
+        v = r["per10k"]
+        mv = [v[m] for m in MODELS]
+        lo_, hi_ = min(mv + [v["pg"]]), max(mv + [v["pg"]])
+        g.append(f'<text x="{QL - 12}" y="{y + 4}" class="tick pairlbl" text-anchor="end">{escape(r["pair"])}</text>'
+                 f'<line x1="{QL}" x2="{PW - QR}" y1="{y}" y2="{y}" class="row"/>'
+                 f'<line x1="{qx(lo_)}" x2="{qx(hi_)}" y1="{y}" y2="{y}" class="span"/>')
+        for k in MODELS + ["pg"]:
+            g.append(ring(qx(v[k]), y, k, f"{NAME[k]}: '{r['pair']}' {v[k]:.1f} per 10,000 words", 5.5 if k == "pg" else 5))
+        pair_rows.append([escape(title.split(" uses")[0]), escape(r["pair"])] + [f"{v[k]:.1f}" for k in KEYS])
+    pair_svgs.append(svg(PW, QH, title, g, "pairs"))
+table_pairs = table(["Side", "Word pair"] + [NAME[k] for k in KEYS], pair_rows)
+
+# ---------------------------------------------------------------- 6. told vs did
 told = [
     ("Em dashes per 1,000 characters", "emdash_per_1k", 1, 'Brief: "almost no em dashes (~0.2)"', 0.2, 0, 0.5),
     ('"I" per 100 words', "i_rate", 100, 'Brief: "you more than I"', None, 0, 1.2),
@@ -262,7 +297,7 @@ for title, key, mult, said, target, lo_, hi_ in told:
         g.append(ring(px(v), yv, k, f"{NAME[k]}: {v:.2f}", 6))
         g.append(f'<text x="{px(v) + 11}" y="{yv + 4}" class="val">{v:.2f}</text>')
         row.append(f"{v:.2f}")
-    told_svgs.append(svg(PW, PH, title, g))
+    told_svgs.append(svg(PW, PH, title, g, "told"))
     told_rows.append(row)
 table_told = table(["Measure", "What the brief said"] + [NAME[k] for k in KEYS], told_rows)
 
@@ -305,7 +340,7 @@ svg {{ width:100%; height:auto; display:block; overflow:visible; }}
 .zero {{ stroke:var(--pg); stroke-width:1.5; }} .band {{ fill:var(--band); }}
 .ref {{ stroke:var(--ref); stroke-width:1.5; stroke-dasharray:4 4; }}
 .span {{ stroke:var(--axis); stroke-width:2; }} .med {{ stroke:var(--text); stroke-width:2; }}
-.tick {{ fill:var(--text2); font-size:12px; }} .axis {{ fill:var(--muted); font-size:12px; }}
+.tick {{ fill:var(--text2); font-size:12px; }} .pairlbl {{ font-style:italic; font-size:13px; }} .axis {{ fill:var(--muted); font-size:12px; }}
 .note {{ fill:var(--muted); font-size:12px; }} .val {{ fill:var(--text2); font-size:12px; font-variant-numeric:tabular-nums; }}
 .unit {{ font-size:12px; color:var(--muted); margin:2px 0 14px; }}
 .ptitle {{ fill:var(--text); font-size:13px; font-weight:600; }}
@@ -376,6 +411,17 @@ for {right} of {sum(D['n'][m] for m in MODELS)} essays, using nothing more than 
 </section>
 
 <section class="card">
+<h2>Paul Graham speculates; the models define</h2>
+<p>Word pairs that every model uses more than Paul Graham, or he uses more than every model, in at least 8 essays
+(subject nouns like "the founder" left out). He hedges and looks ahead: <i>would be</i>, <i>it will</i>, <i>at least</i>,
+<i>a lot</i>. The models pin things down: <i>is a</i>, <i>the thing</i>, <i>the person who</i>, <i>is why</i>,
+<i>the obvious</i>.</p>
+{legend()}
+<div class="wide">{"".join(pair_svgs)}</div>
+{table_pairs}
+</section>
+
+<section class="card">
 <h2>Where the brief gave a rule, the models overshot it</h2>
 <p>The dashed line is what the brief asked for. Told "almost no em dashes", the models used none, though Paul Graham
 does. Told "you more than I", they all but stopped saying I. Told "~15 words", they came in shorter.</p>
@@ -418,3 +464,74 @@ document.addEventListener("pointerout", e => {{ if (e.target.closest("[data-tip]
 </body></html>"""
 OUT.write_text(html)
 print("wrote", OUT)
+
+# ---------------------------------------------------------------- standalone SVGs for the README
+CSS = html[html.index("<style>") + 7:html.index("</style>")].replace("{{", "{").replace("}}", "}")
+CSS = CSS.split("* {")[0]  # just the colour tokens
+CSS += """
+svg { font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; }
+.bg { fill:var(--surface); stroke:var(--grid); } .title { fill:var(--text); font-size:17px; font-weight:650; }
+.sub { fill:var(--text2); font-size:13px; } .lgt { fill:var(--text2); font-size:12px; }
+.frame { fill:none; stroke:var(--grid); } .grid, .row { stroke:var(--grid); stroke-width:1; }
+.zero { stroke:var(--pg); stroke-width:1.5; } .band { fill:var(--band); }
+.ref { stroke:var(--ref); stroke-width:1.5; stroke-dasharray:4 4; }
+.span { stroke:var(--axis); stroke-width:2; } .med { stroke:var(--text); stroke-width:2; }
+.tick { fill:var(--text2); font-size:12px; } .pairlbl { font-style:italic; font-size:13px; }
+.axis, .note { fill:var(--muted); font-size:12px; } .val { fill:var(--text2); font-size:12px; }
+.ptitle { fill:var(--text); font-size:13px; font-weight:600; }
+.dl { fill:var(--text); font-size:13px; font-weight:650; paint-order:stroke; stroke:var(--surface); stroke-width:4px; }
+.m { stroke:var(--surface); stroke-width:1.5; fill-opacity:.85; } .m.pg { fill:none; stroke:var(--pg); stroke-width:1.8; }
+.m.s1 { fill:var(--s1); } .m.s2 { fill:var(--s2); } .m.s3 { fill:var(--s3); }
+"""
+IMG = OUT.parent / "img"
+IMG.mkdir(exist_ok=True)
+TITLES = {
+    "map": ("Every essay, placed by how it's written", "PG spreads out; each model sits in its own tight patch."),
+    "uniformity": ("The models' essays are more alike than PG's", "Each dot is an essay; the bar is the median."),
+    "fingerprint": ("Where each model differs from Paul Graham", "In units of PG's own essay-to-essay spread."),
+    "accents": ("Each model has its own accent", "Where each model is furthest from the other two (per 100 sentences)."),
+    "pairs": ("Paul Graham speculates; the models define", "Word pairs per 10,000 words, in at least 8 essays."),
+    "told": ("Where the brief gave a rule, the models overshot it", "Dashed line: what the brief asked for."),
+}
+
+
+def standalone(key, side_by_side=False, gap=16, pad=20):
+    panels = PARTS[key]
+    scale = 1.0
+    if side_by_side:
+        width = sum(w for w, _, _ in panels) + gap * (len(panels) - 1)
+        scale = min(1.0, 720 / width)
+    head = 74
+    x, y = pad, pad + head
+    inner = []
+    if side_by_side:
+        for w, h, body in panels:
+            inner.append(f'<svg x="{x}" y="{y}" width="{w * scale}" height="{h * scale}" viewBox="0 0 {w} {h}" '
+                         f'overflow="visible">{body}</svg>')
+            x += (w + gap) * scale
+        W_ = 720 + 2 * pad
+        H_ = y + max(h for _, h, _ in panels) * scale + pad
+    else:
+        for w, h, body in panels:
+            inner.append(f'<svg x="{x}" y="{y}" width="{w}" height="{h}" viewBox="0 0 {w} {h}" overflow="visible">{body}</svg>')
+            y += h + gap
+        W_ = max(w for w, _, _ in panels) + 2 * pad
+        H_ = y - gap + pad
+    t, sub = TITLES[key]
+    lg, lx = [], pad
+    for k in KEYS:
+        lab = NAME[k] + (" (human)" if k == "pg" else "")
+        lg.append(f'<circle cx="{lx + 6}" cy="{pad + 54}" r="5" class="m {SLOT[k]}"/>'
+                  f'<text x="{lx + 16}" y="{pad + 58}" class="lgt">{escape(lab)}</text>')
+        lx += 22 + len(lab) * 6.6
+    out = (f'<svg xmlns="http://www.w3.org/2000/svg" width="{W_:.0f}" height="{H_:.0f}" viewBox="0 0 {W_:.0f} {H_:.0f}">'
+           f'<style>{CSS}</style><rect x=".5" y=".5" width="{W_ - 1:.0f}" height="{H_ - 1:.0f}" rx="10" class="bg"/>'
+           f'<text x="{pad}" y="{pad + 16}" class="title">{escape(t)}</text>'
+           f'<text x="{pad}" y="{pad + 36}" class="sub">{escape(sub)}</text>{"".join(lg)}{"".join(inner)}</svg>')
+    (IMG / f"{key}.svg").write_text(out)
+
+
+for key in ("map", "uniformity", "fingerprint", "pairs", "told"):
+    standalone(key)
+standalone("accents", side_by_side=True)
+print("wrote", IMG)

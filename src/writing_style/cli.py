@@ -205,6 +205,36 @@ def cmd_reference(a) -> None:
         print(f"  {d:8}  {f}")
 
 
+def cmd_pairs(a) -> None:
+    from writing_style import pairs as P
+
+    a_name, a_globs, _ = parse_corpus(a.a)
+    A = P.count(load_docs(a_globs, a.exclude))
+    Bs = []
+    for spec in a.b:
+        name, globs, _ = parse_corpus(spec)
+        Bs.append((name, P.count(load_docs(globs, a.exclude))))
+    if not A.total or not all(b.total for _, b in Bs):
+        raise SystemExit("every corpus needs some prose")
+    z_ab = [P.log_odds(A, b) for _, b in Bs]
+    z_ba = [{k: -v for k, v in z.items()} for z in z_ab]
+    names = [n for n, _ in Bs]
+    head = f"  {'pair':20} {a_name[:9]:>9} " + " ".join(f"{n[:9]:>9}" for n in names) + "   per 10k words"
+
+    def show(title, rows, pool):
+        print(f"\n{title}")
+        print(head)
+        for k, z in rows[:a.top]:
+            print(f"  {' '.join(k):20} {A.per10k(k):9.1f} " + " ".join(f"{b.per10k(k):9.1f}" for _, b in Bs)
+                  + f"   (min z {z:.1f}, in {pool.docs[k]} docs)")
+
+    pool_b = P.merge([b for _, b in Bs])
+    show(f"Pairs {a_name} uses more than {' and '.join(names)}:",
+         P.consistent(z_ab, A, a.min_docs, drop_topic=not a.keep_topic), A)
+    show(f"Pairs {' and '.join(names)} {'all ' if len(names) > 1 else ''}use more than {a_name}:",
+         P.consistent(z_ba, pool_b, a.min_docs, drop_topic=not a.keep_topic), pool_b)
+
+
 def cmd_features(a) -> None:
     for fid, f in FEATURES.items():
         print(f"  {fid:28} {f.label}")
@@ -261,6 +291,16 @@ def main(argv: list[str] | None = None) -> None:
     r.add_argument("--note", default="")
     r.add_argument("-o", "--out", required=True)
     r.set_defaults(fn=cmd_reference)
+
+    w = sub.add_parser("pairs", help="word pairs one corpus uses far more than others (and the reverse)")
+    w.add_argument("-a", required=True, help="name=glob: the writing you care about")
+    w.add_argument("-b", action="append", required=True,
+                   help="name=glob to compare against; repeat, and only pairs that hold against every one are shown")
+    w.add_argument("-x", "--exclude", action="append", default=[])
+    w.add_argument("--top", type=int, default=20)
+    w.add_argument("--min-docs", type=int, default=5, help="a pair must appear in at least this many documents")
+    w.add_argument("--keep-topic", action="store_true", help="keep pairs with subject nouns (founder, product, ...)")
+    w.set_defaults(fn=cmd_pairs)
 
     sub.add_parser("features", help="list what is measured").set_defaults(fn=cmd_features)
 

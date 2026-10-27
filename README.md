@@ -17,7 +17,7 @@ We gave Claude Opus 5, Codex Terra and Grok 4.6 the same long, careful brief
 on how Paul Graham writes, had each write 25 essays on his topics, and
 measured all of them against 50 of his.
 
-**[See the charts →](docs/pg-vs-llm.html)**
+![Every essay placed on a map by its features: Paul Graham's 50 essays spread across the left, Claude's in a tight cluster at the bottom, Codex's and Grok's in tight clusters on the right](docs/img/map.svg)
 
 1. **No model got close.** Each one is still told apart from PG at AUC ≥ 0.99,
    even on features the brief never mentioned. Two halves of PG's own essays
@@ -37,18 +37,35 @@ measured all of them against 50 of his.
    | gerund object (*started building*) | 1.2 | 2.7–3.2 |
 
    PG explains why and wonders out loud. The models tell you what to do.
+
+   ![Each model's difference from Paul Graham on 20 features, in units of his own essay-to-essay spread; most dots fall outside his normal range, and the three models usually miss in the same direction](docs/img/fingerprint.svg)
 3. **Each model has its own accent.** A nearest-average classifier names the
    right model for 74 of 75 essays. Claude uses contractions as often as PG and
    joins clauses with *and* far more than anyone. Codex loves lists of three.
    Codex and Grok barely contract at all, about 4 of PG's standard deviations
    below him.
+
+   ![For each model, the three features where it is furthest from the other two](docs/img/accents.svg)
 4. **Their essays are more alike than his.** Each model's essays sit 19–32%
    closer to their own average than PG's do to his. Real writing wanders;
    generated writing clusters. `check` measures this for any draft.
-5. **The brief backfired where it was explicit.** Told "almost no em dashes",
+
+   ![Each essay's distance from its own author's average: Paul Graham median 0.82, the models 0.56 to 0.66; and sentence-length spread, where Codex and Grok are much flatter than Paul Graham](docs/img/uniformity.svg)
+5. **PG speculates; the models define.** Same topics, different word pairs.
+   He hedges and looks ahead: *would be*, *it will*, *at least*, *a lot*,
+   *not just*. Every model leans on *is a*, *the thing*, *the person who*,
+   *is why*, *the obvious*. Run `writing-style pairs` to find the same thing
+   for any writer.
+
+   ![Word pairs per 10,000 words. Paul Graham uses to be, a lot, there are, would be, at least and it will far more than every model; every model uses the person, the same, the obvious, is a, the work and the thing far more than he does](docs/img/pairs.svg)
+6. **The brief backfired where it was explicit.** Told "almost no em dashes",
    the models used none (PG uses them). Told "you more than I", they said *I*
    at a quarter of his rate or less. Told "~15 words", they wrote shorter.
    They follow instructions harder than the writer they're imitating.
+
+   ![What the brief asked for against what each model did: no em dashes at all, almost no I, and shorter sentences than the 15-word target](docs/img/told.svg)
+
+Interactive version with tooltips and tables: [`docs/pg-vs-llm.html`](docs/pg-vs-llm.html).
 
 Audit notes, bugs we fixed in the original experiment and how to reproduce:
 [`analysis/pg-vs-llm/`](analysis/pg-vs-llm/README.md).
@@ -159,6 +176,20 @@ The skill (`src/writing_style/skill/SKILL.md`) tells the agent to:
 4. leave tables, code and placeholders alone;
 5. avoid the patterns that read as AI whatever the numbers say;
 6. report a before/after table.
+
+## Find someone's word pairs
+
+```sh
+writing-style pairs -a 'me=~/blog/*.md' -b 'claude=drafts/claude' -b 'gpt=drafts/gpt'
+```
+
+Lists the word pairs the `-a` writing uses far more than every `-b` corpus,
+and the reverse, ranked by weighted log-odds (Monroe et al. 2008) so a pair
+seen twice can't top the list. Each `-b` is compared separately and only pairs
+that hold against all of them are shown, which keeps most of the topic out;
+obvious subject nouns (*founder*, *product*, …) are dropped unless you pass
+`--keep-topic`. A writer's own pairs are a quick check on a draft: if it has
+none of them, it probably isn't in their voice.
 
 ## Build your own AI reference
 

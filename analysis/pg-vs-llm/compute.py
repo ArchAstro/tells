@@ -15,6 +15,7 @@ from pathlib import Path
 import numpy as np
 
 from writing_style import model as M
+from writing_style import pairs as P
 from writing_style.features import FEATURES
 from writing_style.sources import expand, load
 
@@ -31,10 +32,11 @@ FEATS = list(FEATURES)
 
 
 def main(root: Path, out: Path) -> None:
-    essays = {}
+    essays, counts = {}, {}
     for key, (_, rel) in CORPORA.items():
-        docs = [load(p) for p in expand(str(root / rel))]
-        essays[key] = [M.draft_stats(d)[0] for d in docs if d.sentences]
+        docs = [d for d in (load(p) for p in expand(str(root / rel))) if d.sentences]
+        essays[key] = [M.draft_stats(d)[0] for d in docs]
+        counts[key] = P.count(docs)
         print(key, len(essays[key]), file=sys.stderr)
 
     X = {k: np.array([[s.rate(f) for f in FEATS] for s in v]) for k, v in essays.items()}
@@ -102,6 +104,18 @@ def main(root: Path, out: Path) -> None:
         confusion[truth][guess] += 1
         hits += guess == truth
 
+    # 5. word pairs: what PG uses more than every model, and what every model uses more than PG
+    pg_vs = [P.log_odds(counts["pg"], counts[m]) for m in MODELS]
+    pool = P.merge([counts[m] for m in MODELS])
+
+    def pair_rows(rows):
+        return [{"pair": " ".join(k), "z": z, "per10k": {c: counts[c].per10k(k) for c in CORPORA}} for k, z in rows[:12]]
+
+    word_pairs = {
+        "pg_more": pair_rows(P.consistent(pg_vs, counts["pg"], 8)),
+        "models_more": pair_rows(P.consistent([{k: -v for k, v in z.items()} for z in pg_vs], pool, 8)),
+    }
+
     data = {
         "corpora": {k: n for k, (n, _) in CORPORA.items()},
         "n": {k: len(v) for k, v in essays.items()},
@@ -109,6 +123,7 @@ def main(root: Path, out: Path) -> None:
         "pca": {"points": pca, "explained": explained.tolist(), "loadings": loadings},
         "uniformity": uniformity, "sd_len": burst, "mean_len": mean_len, "len_cv": cv,
         "signatures": signatures,
+        "pairs": word_pairs,
         "model_id": {"accuracy": hits / len(names), "confusion": confusion},
     }
     out.write_text(json.dumps(data, indent=1))

@@ -75,7 +75,8 @@ instruct.
 2. Uniformity: each model's essays sit 19–32% closer to their own average than PG's do.
 3. Fingerprint: each model's difference from PG per feature, in units of PG's own spread.
 4. Accents: what tells the three models apart from each other (74 of 75 essays named correctly).
-5. Told vs did: what the brief asked for, what each model produced, what PG does.
+5. Word pairs: PG speculates (*would be*, *at least*); the models define (*is a*, *the thing*).
+6. Told vs did: what the brief asked for, what each model produced, what PG does.
 
 ## Reproduce
 
@@ -88,7 +89,7 @@ PYTHONPATH=.:path/to uv run --no-project --with nltk --with numpy --with scipy \
 
 # from this repo, in analysis/pg-vs-llm/
 uv run --with numpy python compute.py ~/projects/writing-patterns results/essays.json
-python3 charts.py results ../../docs/pg-vs-llm.html
+python3 charts.py results ../../docs/pg-vs-llm.html   # also writes docs/img/*.svg for the README
 
 # the reference shipped with the CLI
 writing-style reference --human 'Paul Graham=human/paul_graham' \

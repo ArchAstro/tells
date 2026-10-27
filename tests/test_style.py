@@ -145,6 +145,28 @@ class Model(unittest.TestCase):
         self.assertEqual(M.auc([1], [1]), 0.5)
 
 
+class Pairs(unittest.TestCase):
+    def test_consistent_pairs_beat_every_comparison(self):
+        from writing_style import pairs as P
+
+        me = P.count([doc(f"a{i}", ["I think it is a lot better.", "I think so, a lot."] * 5) for i in range(6)])
+        bots = [P.count([doc(f"{n}{i}", ["The thing is a tool.", "That is why the thing works."] * 5)
+                         for i in range(6)]) for n in "xy"]
+        mine = dict(P.consistent([P.log_odds(me, b) for b in bots], me))
+        theirs = dict(P.consistent([{k: -v for k, v in P.log_odds(me, b).items()} for b in bots], P.merge(bots)))
+        self.assertIn(("i", "think"), mine)
+        self.assertIn(("the", "thing"), theirs)
+        self.assertNotIn(("i", "think"), theirs)
+
+    def test_topic_nouns_are_dropped(self):
+        from writing_style import pairs as P
+
+        a = P.count([doc(f"a{i}", ["The founder left."] * 5) for i in range(6)])
+        b = P.count([doc(f"b{i}", ["It rained."] * 5) for i in range(6)])
+        self.assertNotIn(("the", "founder"), dict(P.consistent([P.log_odds(a, b)], a)))
+        self.assertIn(("the", "founder"), dict(P.consistent([P.log_odds(a, b)], a, drop_topic=False)))
+
+
 class Cli(unittest.TestCase):
     def test_build_and_check(self):
         with tempfile.TemporaryDirectory() as d:
