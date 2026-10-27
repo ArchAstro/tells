@@ -1,0 +1,691 @@
+{
+ "human": "Paul Graham",
+ "machines": [
+  "Claude Opus 5",
+  "Codex Terra",
+  "Grok 4.6"
+ ],
+ "features": {
+  "zero_relative_clause": {
+   "human": 0.25486764384161015,
+   "Claude Opus 5": 0.21118469462840322,
+   "Codex Terra": 0.1174342105263158,
+   "Grok 4.6": 0.1489848441521304,
+   "auc": {
+    "Claude Opus 5": 0.2724,
+    "Codex Terra": 0.0208,
+    "Grok 4.6": 0.0656
+   },
+   "direction": "too_few"
+  },
+  "that_relative_clause": {
+   "human": 0.06191205425508641,
+   "Claude Opus 5": 0.08314937454010302,
+   "Codex Terra": 0.05361842105263158,
+   "Grok 4.6": 0.06548470117243352,
+   "auc": {
+    "Claude Opus 5": 0.6896,
+    "Codex Terra": 0.4276,
+    "Grok 4.6": 0.5276
+   },
+   "direction": null
+  },
+  "wh_relative_clause": {
+   "human": 0.05272369284620433,
+   "Claude Opus 5": 0.07689477557027226,
+   "Codex Terra": 0.062171052631578946,
+   "Grok 4.6": 0.06748641692879612,
+   "auc": {
+    "Claude Opus 5": 0.7592,
+    "Codex Terra": 0.6256,
+    "Grok 4.6": 0.6776
+   },
+   "direction": null
+  },
+  "sentential_relative": {
+   "human": 0.003937869175235178,
+   "Claude Opus 5": 0.01545253863134658,
+   "Codex Terra": 0.003618421052631579,
+   "Grok 4.6": 0.006005147269087789,
+   "auc": {
+    "Claude Opus 5": 0.784,
+    "Codex Terra": 0.5212,
+    "Grok 4.6": 0.596
+   },
+   "direction": null
+  },
+  "reduced_relative_clause": {
+   "human": 0.0461605775541457,
+   "Claude Opus 5": 0.04231052244297277,
+   "Codex Terra": 0.04802631578947368,
+   "Grok 4.6": 0.03231341149556763,
+   "auc": {
+    "Claude Opus 5": 0.4588,
+    "Codex Terra": 0.5268,
+    "Grok 4.6": 0.3392
+   },
+   "direction": null
+  },
+  "noun_appositive_that": {
+   "human": 0.0177204112885583,
+   "Claude Opus 5": 0.015084621044885945,
+   "Codex Terra": 0.017434210526315788,
+   "Grok 4.6": 0.007148984844152131,
+   "auc": {
+    "Claude Opus 5": 0.4936,
+    "Codex Terra": 0.5292,
+    "Grok 4.6": 0.33
+   },
+   "direction": null
+  },
+  "that_complement": {
+   "human": 0.020345657405381756,
+   "Claude Opus 5": 0.006254598969830758,
+   "Codex Terra": 0.015789473684210527,
+   "Grok 4.6": 0.0031455533314269373,
+   "auc": {
+    "Claude Opus 5": 0.2504,
+    "Codex Terra": 0.4444,
+    "Grok 4.6": 0.1908
+   },
+   "direction": null
+  },
+  "zero_that_complement": {
+   "human": 0.07438197330999781,
+   "Claude Opus 5": 0.061074319352465045,
+   "Codex Terra": 0.06677631578947368,
+   "Grok 4.6": 0.04775521875893623,
+   "auc": {
+    "Claude Opus 5": 0.3504,
+    "Codex Terra": 0.4356,
+    "Grok 4.6": 0.2356
+   },
+   "direction": null
+  },
+  "infinitival_complement": {
+   "human": 0.15598337344126012,
+   "Claude Opus 5": 0.07836644591611479,
+   "Codex Terra": 0.08092105263157895,
+   "Grok 4.6": 0.063768944809837,
+   "auc": {
+    "Claude Opus 5": 0.104,
+    "Codex Terra": 0.0932,
+    "Grok 4.6": 0.0548
+   },
+   "direction": "too_few"
+  },
+  "gerund_complement": {
+   "human": 0.01334500109385255,
+   "Claude Opus 5": 0.03237674760853569,
+   "Codex Terra": 0.02763157894736842,
+   "Grok 4.6": 0.026022304832713755,
+   "auc": {
+    "Claude Opus 5": 0.81,
+    "Codex Terra": 0.8124,
+    "Grok 4.6": 0.7408
+   },
+   "direction": "too_many"
+  },
+  "whether_if_complement": {
+   "human": 0.006125574272588055,
+   "Claude Opus 5": 0.006622516556291391,
+   "Codex Terra": 0.014473684210526316,
+   "Grok 4.6": 0.007148984844152131,
+   "auc": {
+    "Claude Opus 5": 0.5788,
+    "Codex Terra": 0.7864,
+    "Grok 4.6": 0.614
+   },
+   "direction": null
+  },
+  "ditransitive": {
+   "human": 0.010938525486764383,
+   "Claude Opus 5": 0.022442972774098603,
+   "Codex Terra": 0.017763157894736842,
+   "Grok 4.6": 0.019445238776093794,
+   "auc": {
+    "Claude Opus 5": 0.7484,
+    "Codex Terra": 0.6792,
+    "Grok 4.6": 0.6916
+   },
+   "direction": "too_many"
+  },
+  "be_passive": {
+   "human": 0.06256836578429227,
+   "Claude Opus 5": 0.045989698307579104,
+   "Codex Terra": 0.046052631578947366,
+   "Grok 4.6": 0.03803259937088933,
+   "auc": {
+    "Claude Opus 5": 0.3792,
+    "Codex Terra": 0.386,
+    "Grok 4.6": 0.3272
+   },
+   "direction": null
+  },
+  "get_passive": {
+   "human": 0.005469262743382192,
+   "Claude Opus 5": 0.01839587932303164,
+   "Codex Terra": 0.009210526315789473,
+   "Grok 4.6": 0.011152416356877323,
+   "auc": {
+    "Claude Opus 5": 0.7744,
+    "Codex Terra": 0.6348,
+    "Grok 4.6": 0.73
+   },
+   "direction": null
+  },
+  "there_existential": {
+   "human": 0.034346970028440164,
+   "Claude Opus 5": 0.008462104488594555,
+   "Codex Terra": 0.009539473684210526,
+   "Grok 4.6": 0.009150700600514728,
+   "auc": {
+    "Claude Opus 5": 0.1768,
+    "Codex Terra": 0.192,
+    "Grok 4.6": 0.18
+   },
+   "direction": "too_few"
+  },
+  "it_extraposition": {
+   "human": 0.0024064756070881644,
+   "Claude Opus 5": 0.0,
+   "Codex Terra": 0.001644736842105263,
+   "Grok 4.6": 0.001143837575064341,
+   "auc": {
+    "Claude Opus 5": 0.41,
+    "Codex Terra": 0.5048,
+    "Grok 4.6": 0.482
+   },
+   "direction": null
+  },
+  "it_cleft": {
+   "human": 0.0,
+   "Claude Opus 5": 0.0007358351729212656,
+   "Codex Terra": 0.0003289473684210526,
+   "Grok 4.6": 0.0008578781812982557,
+   "auc": {
+    "Claude Opus 5": 0.54,
+    "Codex Terra": 0.52,
+    "Grok 4.6": 0.54
+   },
+   "direction": null
+  },
+  "polar_question": {
+   "human": 0.012907460074381974,
+   "Claude Opus 5": 0.0014716703458425313,
+   "Codex Terra": 0.003618421052631579,
+   "Grok 4.6": 0.0034315127251930227,
+   "auc": {
+    "Claude Opus 5": 0.224,
+    "Codex Terra": 0.2928,
+    "Grok 4.6": 0.2792
+   },
+   "direction": "too_few"
+  },
+  "wh_question": {
+   "human": 0.025814920148763947,
+   "Claude Opus 5": 0.0029433406916850625,
+   "Codex Terra": 0.013157894736842105,
+   "Grok 4.6": 0.001143837575064341,
+   "auc": {
+    "Claude Opus 5": 0.11,
+    "Codex Terra": 0.2792,
+    "Grok 4.6": 0.0856
+   },
+   "direction": "too_few"
+  },
+  "conditional_if": {
+   "human": 0.09385254867643841,
+   "Claude Opus 5": 0.04672553348050037,
+   "Codex Terra": 0.037171052631578945,
+   "Grok 4.6": 0.07063197026022305,
+   "auc": {
+    "Claude Opus 5": 0.1964,
+    "Codex Terra": 0.1424,
+    "Grok 4.6": 0.3448
+   },
+   "direction": "too_few"
+  },
+  "concessive": {
+   "human": 0.008532049879676219,
+   "Claude Opus 5": 0.0003679175864606328,
+   "Codex Terra": 0.0013157894736842105,
+   "Grok 4.6": 0.0,
+   "auc": {
+    "Claude Opus 5": 0.2728,
+    "Codex Terra": 0.3112,
+    "Grok 4.6": 0.26
+   },
+   "direction": "too_few"
+  },
+  "imperative": {
+   "human": 0.007219426821264493,
+   "Claude Opus 5": 0.01949963208241354,
+   "Codex Terra": 0.017763157894736842,
+   "Grok 4.6": 0.03517300543322848,
+   "auc": {
+    "Claude Opus 5": 0.8332,
+    "Codex Terra": 0.81,
+    "Grok 4.6": 0.9004
+   },
+   "direction": "too_many"
+  },
+  "pseudo_cleft": {
+   "human": 0.0004375410194705754,
+   "Claude Opus 5": 0.002207505518763797,
+   "Codex Terra": 0.0006578947368421052,
+   "Grok 4.6": 0.0020017157563625965,
+   "auc": {
+    "Claude Opus 5": 0.6,
+    "Codex Terra": 0.52,
+    "Grok 4.6": 0.6
+   },
+   "direction": null
+  },
+  "reverse_pseudo_cleft": {
+   "human": 0.0006563115292058631,
+   "Claude Opus 5": 0.0033112582781456954,
+   "Codex Terra": 0.0006578947368421052,
+   "Grok 4.6": 0.005719187875321705,
+   "auc": {
+    "Claude Opus 5": 0.6096,
+    "Codex Terra": 0.5092,
+    "Grok 4.6": 0.786
+   },
+   "direction": null
+  },
+  "prepositional_dative": {
+   "human": 0.0024064756070881644,
+   "Claude Opus 5": 0.003679175864606328,
+   "Codex Terra": 0.003947368421052632,
+   "Grok 4.6": 0.0008578781812982557,
+   "auc": {
+    "Claude Opus 5": 0.566,
+    "Codex Terra": 0.5948,
+    "Grok 4.6": 0.4456
+   },
+   "direction": null
+  },
+  "purpose_infinitive": {
+   "human": 0.17698534237584773,
+   "Claude Opus 5": 0.06880058866813833,
+   "Codex Terra": 0.07138157894736842,
+   "Grok 4.6": 0.05318844724049185,
+   "auc": {
+    "Claude Opus 5": 0.0632,
+    "Codex Terra": 0.0656,
+    "Grok 4.6": 0.0384
+   },
+   "direction": "too_few"
+  },
+  "free_relative": {
+   "human": 0.0676000875082039,
+   "Claude Opus 5": 0.094186902133922,
+   "Codex Terra": 0.036513157894736845,
+   "Grok 4.6": 0.04804117815270231,
+   "auc": {
+    "Claude Opus 5": 0.7552,
+    "Codex Terra": 0.262,
+    "Grok 4.6": 0.3712
+   },
+   "direction": null
+  },
+  "comparative_than": {
+   "human": 0.02056442791511704,
+   "Claude Opus 5": 0.018027961736571008,
+   "Codex Terra": 0.011513157894736841,
+   "Grok 4.6": 0.010866456963111238,
+   "auc": {
+    "Claude Opus 5": 0.4584,
+    "Codex Terra": 0.3196,
+    "Grok 4.6": 0.3124
+   },
+   "direction": null
+  },
+  "equative_as": {
+   "human": 0.008969590899146795,
+   "Claude Opus 5": 0.0011037527593818985,
+   "Codex Terra": 0.0006578947368421052,
+   "Grok 4.6": 0.0017157563625965113,
+   "auc": {
+    "Claude Opus 5": 0.2992,
+    "Codex Terra": 0.2824,
+    "Grok 4.6": 0.3192
+   },
+   "direction": "too_few"
+  },
+  "comparative_correlative": {
+   "human": 0.001968934587617589,
+   "Claude Opus 5": 0.0007358351729212656,
+   "Codex Terra": 0.0006578947368421052,
+   "Grok 4.6": 0.0,
+   "auc": {
+    "Claude Opus 5": 0.4464,
+    "Codex Terra": 0.4452,
+    "Grok 4.6": 0.41
+   },
+   "direction": null
+  },
+  "because_adjunct": {
+   "human": 0.03762852767446948,
+   "Claude Opus 5": 0.06070640176600441,
+   "Codex Terra": 0.05690789473684211,
+   "Grok 4.6": 0.036030883614526735,
+   "auc": {
+    "Claude Opus 5": 0.826,
+    "Codex Terra": 0.8036,
+    "Grok 4.6": 0.5728
+   },
+   "direction": null
+  },
+  "when_adjunct": {
+   "human": 0.04462918398599869,
+   "Claude Opus 5": 0.029065489330389993,
+   "Codex Terra": 0.027960526315789474,
+   "Grok 4.6": 0.018301401201029455,
+   "auc": {
+    "Claude Opus 5": 0.3392,
+    "Codex Terra": 0.3188,
+    "Grok 4.6": 0.1968
+   },
+   "direction": "too_few"
+  },
+  "so_that_purpose": {
+   "human": 0.0008750820389411508,
+   "Claude Opus 5": 0.0007358351729212656,
+   "Codex Terra": 0.0,
+   "Grok 4.6": 0.0,
+   "auc": {
+    "Claude Opus 5": 0.4816,
+    "Codex Terra": 0.46,
+    "Grok 4.6": 0.46
+   },
+   "direction": null
+  },
+  "np_coordination": {
+   "human": 0.05009844672938088,
+   "Claude Opus 5": 0.04047093451066961,
+   "Codex Terra": 0.01644736842105263,
+   "Grok 4.6": 0.028309979982842435,
+   "auc": {
+    "Claude Opus 5": 0.4796,
+    "Codex Terra": 0.1796,
+    "Grok 4.6": 0.3204
+   },
+   "direction": null
+  },
+  "clausal_coordination": {
+   "human": 0.05534893896302778,
+   "Claude Opus 5": 0.12472406181015452,
+   "Codex Terra": 0.047697368421052634,
+   "Grok 4.6": 0.04603946239633972,
+   "auc": {
+    "Claude Opus 5": 0.9488,
+    "Codex Terra": 0.4248,
+    "Grok 4.6": 0.3976
+   },
+   "direction": null
+  },
+  "correlative_coordination": {
+   "human": 0.014876394661999562,
+   "Claude Opus 5": 0.00772626931567329,
+   "Codex Terra": 0.002302631578947368,
+   "Grok 4.6": 0.0037174721189591076,
+   "auc": {
+    "Claude Opus 5": 0.3628,
+    "Codex Terra": 0.2356,
+    "Grok 4.6": 0.2796
+   },
+   "direction": null
+  },
+  "nominal_apposition": {
+   "human": 0.022095821483264055,
+   "Claude Opus 5": 0.025018395879323033,
+   "Codex Terra": 0.023355263157894737,
+   "Grok 4.6": 0.030883614526737203,
+   "auc": {
+    "Claude Opus 5": 0.5616,
+    "Codex Terra": 0.564,
+    "Grok 4.6": 0.6816
+   },
+   "direction": null
+  },
+  "negative_inversion": {
+   "human": 0.0013126230584117262,
+   "Claude Opus 5": 0.0,
+   "Codex Terra": 0.0,
+   "Grok 4.6": 0.0,
+   "auc": {
+    "Claude Opus 5": 0.44,
+    "Codex Terra": 0.44,
+    "Grok 4.6": 0.44
+   },
+   "direction": null
+  },
+  "locative_inversion": {
+   "human": 0.0002187705097352877,
+   "Claude Opus 5": 0.0,
+   "Codex Terra": 0.0,
+   "Grok 4.6": 0.0,
+   "auc": {
+    "Claude Opus 5": 0.49,
+    "Codex Terra": 0.49,
+    "Grok 4.6": 0.49
+   },
+   "direction": null
+  },
+  "object_fronting": {
+   "human": 0.0002187705097352877,
+   "Claude Opus 5": 0.0,
+   "Codex Terra": 0.0,
+   "Grok 4.6": 0.0,
+   "auc": {
+    "Claude Opus 5": 0.49,
+    "Codex Terra": 0.49,
+    "Grok 4.6": 0.49
+   },
+   "direction": null
+  },
+  "fragment": {
+   "human": 0.0177204112885583,
+   "Claude Opus 5": 0.03715967623252391,
+   "Codex Terra": 0.017763157894736842,
+   "Grok 4.6": 0.035458964826994566,
+   "auc": {
+    "Claude Opus 5": 0.77,
+    "Codex Terra": 0.5004,
+    "Grok 4.6": 0.7264
+   },
+   "direction": null
+  },
+  "short_sentence": {
+   "human": 0.07635090789761541,
+   "Claude Opus 5": 0.1659308314937454,
+   "Codex Terra": 0.12236842105263158,
+   "Grok 4.6": 0.20245925078638832,
+   "auc": {
+    "Claude Opus 5": 0.9832,
+    "Codex Terra": 0.85,
+    "Grok 4.6": 0.9684
+   },
+   "direction": "too_many"
+  },
+  "long_sentence": {
+   "human": 0.07503828483920368,
+   "Claude Opus 5": 0.04856512141280353,
+   "Codex Terra": 0.004934210526315789,
+   "Grok 4.6": 0.0062911066628538745,
+   "auc": {
+    "Claude Opus 5": 0.2956,
+    "Codex Terra": 0.0008,
+    "Grok 4.6": 0.004
+   },
+   "direction": "too_few"
+  },
+  "colon_label": {
+   "human": 0.0026252461168234523,
+   "Claude Opus 5": 0.013980868285504048,
+   "Codex Terra": 0.0029605263157894738,
+   "Grok 4.6": 0.0028595939376608523,
+   "auc": {
+    "Claude Opus 5": 0.8248,
+    "Codex Terra": 0.5416,
+    "Grok 4.6": 0.5496
+   },
+   "direction": null
+  },
+  "ends_colon": {
+   "human": 0.0017501640778823015,
+   "Claude Opus 5": 0.0,
+   "Codex Terra": 0.0,
+   "Grok 4.6": 0.0,
+   "auc": {
+    "Claude Opus 5": 0.42,
+    "Codex Terra": 0.42,
+    "Grok 4.6": 0.42
+   },
+   "direction": null
+  },
+  "em_dash": {
+   "human": 0.011376066506234959,
+   "Claude Opus 5": 0.0,
+   "Codex Terra": 0.0,
+   "Grok 4.6": 0.0,
+   "auc": {
+    "Claude Opus 5": 0.24,
+    "Codex Terra": 0.24,
+    "Grok 4.6": 0.24
+   },
+   "direction": "too_few"
+  },
+  "semicolon": {
+   "human": 0.012469919054911398,
+   "Claude Opus 5": 0.003679175864606328,
+   "Codex Terra": 0.0003289473684210526,
+   "Grok 4.6": 0.0,
+   "auc": {
+    "Claude Opus 5": 0.26,
+    "Codex Terra": 0.1808,
+    "Grok 4.6": 0.17
+   },
+   "direction": "too_few"
+  },
+  "parenthetical": {
+   "human": 0.015751476700940712,
+   "Claude Opus 5": 0.0,
+   "Codex Terra": 0.0,
+   "Grok 4.6": 0.0,
+   "auc": {
+    "Claude Opus 5": 0.15,
+    "Codex Terra": 0.15,
+    "Grok 4.6": 0.15
+   },
+   "direction": "too_few"
+  },
+  "first_person": {
+   "human": 0.2113323124042879,
+   "Claude Opus 5": 0.061074319352465045,
+   "Codex Terra": 0.011513157894736841,
+   "Grok 4.6": 0.010866456963111238,
+   "auc": {
+    "Claude Opus 5": 0.0652,
+    "Codex Terra": 0.0256,
+    "Grok 4.6": 0.024
+   },
+   "direction": "too_few"
+  },
+  "second_person": {
+   "human": 0.25880551301684535,
+   "Claude Opus 5": 0.3031640912435614,
+   "Codex Terra": 0.14638157894736842,
+   "Grok 4.6": 0.2962539319416643,
+   "auc": {
+    "Claude Opus 5": 0.652,
+    "Codex Terra": 0.3064,
+    "Grok 4.6": 0.6612
+   },
+   "direction": null
+  },
+  "contraction": {
+   "human": 0.40713191861737036,
+   "Claude Opus 5": 0.4275202354672553,
+   "Codex Terra": 0.03684210526315789,
+   "Grok 4.6": 0.0560480411781527,
+   "auc": {
+    "Claude Opus 5": 0.5868,
+    "Codex Terra": 0.0,
+    "Grok 4.6": 0.0032
+   },
+   "direction": null
+  },
+  "hedge": {
+   "human": 0.12273025596149639,
+   "Claude Opus 5": 0.07100809418690214,
+   "Codex Terra": 0.024671052631578948,
+   "Grok 4.6": 0.03517300543322848,
+   "auc": {
+    "Claude Opus 5": 0.1864,
+    "Codex Terra": 0.0184,
+    "Grok 4.6": 0.0328
+   },
+   "direction": "too_few"
+  },
+  "starts_with_conjunction": {
+   "human": 0.16932837453511268,
+   "Claude Opus 5": 0.06769683590875644,
+   "Codex Terra": 0.03980263157894737,
+   "Grok 4.6": 0.004861309694023448,
+   "auc": {
+    "Claude Opus 5": 0.0364,
+    "Codex Terra": 0.0168,
+    "Grok 4.6": 0.0
+   },
+   "direction": "too_few"
+  },
+  "not_x_but_y": {
+   "human": 0.02340844454167578,
+   "Claude Opus 5": 0.010301692420897719,
+   "Codex Terra": 0.0013157894736842105,
+   "Grok 4.6": 0.001143837575064341,
+   "auc": {
+    "Claude Opus 5": 0.242,
+    "Codex Terra": 0.1072,
+    "Grok 4.6": 0.106
+   },
+   "direction": "too_few"
+  },
+  "list_of_three": {
+   "human": 0.020126886895646467,
+   "Claude Opus 5": 0.023178807947019868,
+   "Codex Terra": 0.06611842105263158,
+   "Grok 4.6": 0.023448670288818987,
+   "auc": {
+    "Claude Opus 5": 0.568,
+    "Codex Terra": 0.9376,
+    "Grok 4.6": 0.578
+   },
+   "direction": null
+  },
+  "imperative_start": {
+   "human": 0.01028221395755852,
+   "Claude Opus 5": 0.02612214863870493,
+   "Codex Terra": 0.021052631578947368,
+   "Grok 4.6": 0.042893909064912784,
+   "auc": {
+    "Claude Opus 5": 0.8296,
+    "Codex Terra": 0.7244,
+    "Grok 4.6": 0.8648
+   },
+   "direction": "too_many"
+  }
+ },
+ "note": "50 Paul Graham essays vs 25 essays each from three models given one detailed style brief (projects/writing-patterns, Oct 2026). Rates are per sentence. The style brief told the models to avoid em dashes, use 'you' more than 'I', keep sentences near 15 words and split 'and' clauses, so those features ('steered') say more about the brief than about the models.",
+ "steered": [
+  "em_dash",
+  "first_person",
+  "second_person",
+  "long_sentence",
+  "short_sentence",
+  "clausal_coordination"
+ ]
+}
