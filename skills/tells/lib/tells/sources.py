@@ -126,7 +126,7 @@ def tweet_units(body: str) -> list[str]:
 def split_units(units: list[str]) -> list[str]:
     from nltk.tokenize import sent_tokenize
 
-    from writing_style.grammar.data import ensure_data
+    from tells.grammar.data import ensure_data
 
     ensure_data()
     out = []

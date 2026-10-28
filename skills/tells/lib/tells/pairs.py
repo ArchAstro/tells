@@ -14,7 +14,7 @@ import re
 from collections import Counter
 from dataclasses import dataclass
 
-from writing_style.sources import Doc
+from tells.sources import Doc
 
 TOK = re.compile(r"[a-z]+(?:'[a-z]+)?")
 # Subject matter, not style: dropped from pair lists by default.

@@ -1,6 +1,12 @@
-# writing-style
+# tells
 
 **Does this draft sound like the person who's supposed to have written it?**
+
+Every writer has tells, the small habits that give them away, and so does
+every model. `tells` learns yours and shows which ones a draft is missing,
+and which machine tells it picked up instead.
+
+![tells: three robots at a poker table, each giving away a tell](docs/img/tells.jpg)
 
 Build a statistical model of how someone writes from their own posts, essays,
 tweets or email. Then check any draft against it, sentence by sentence, and
@@ -14,43 +20,56 @@ hedges, *And/But* openers, lists of three).
 ## What we found with it
 
 We gave Claude Opus 5, Codex Terra and Grok 4.6 the same long, careful brief
-on how Paul Graham writes, had each write 25 essays on his topics, and
-measured all of them against 50 of his.
+on how Paul Graham writes ([`style-brief.md`](analysis/pg-vs-llm/style-brief.md)),
+had each write 25 essays on his topics, and measured all of them against 50 of
+his. The brief gave explicit rules for 11 of the features (dashes, *I* vs
+*you*, sentence length, *and* joins, hedging, questions, contractions,
+antithesis), so those are marked *steered* and left out of every claim below
+that says "unsteered".
 
-![Every essay placed on a map by its features: Paul Graham's 50 essays spread across the left, Claude's in a tight cluster at the bottom, Codex's and Grok's in tight clusters on the right](docs/img/map.svg)
+![Every essay placed on a map by its unsteered features: Paul Graham's 50 essays on the left, all 75 model essays together on the right, with open ground between](docs/img/map.svg)
 
-1. **No model got close.** Each one is still told apart from PG at AUC ≥ 0.99,
-   even on features the brief never mentioned. Two halves of PG's own essays
-   score 0.57.
-2. **They miss him the same way.** All three under-use what he does most:
-   purpose clauses (*…to see why*), *wanted to / had to*, hedges, *if*,
-   questions, sentences that start with *And* or *But*. All three over-use
-   commands to the reader and gerund objects (*started building*).
+1. **No model got close.** On the 44 unsteered features, a cross-validated
+   nearest-centroid score separates each model from PG with AUC 1.00. The
+   same test on PG against himself (his essays split in half at random)
+   scores 0.47.
+2. **They miss him the same way.** All three under-use what he does most and
+   the brief never mentioned: purpose clauses (*…to see why*), *wanted to /
+   had to*, *if*, *there is*, sentences that start with *And* or *But*. All
+   three over-use commands to the reader and gerund objects (*started
+   building*).
 
    | per 100 sentences | PG | Models |
    |---|---:|---:|
    | purpose clause (*to see why*) | 17.2 | 5–7 |
    | *wanted to / had to* | 15.2 | 6–8 |
    | conditional *if* | 9.4 | 4–7 |
-   | questions | 3.8 | 0.4–1.7 |
+   | *there is / there are* | 3.4 | ~1 |
    | imperative | 0.8 | 1.8–3.5 |
    | gerund object (*started building*) | 1.2 | 2.7–3.2 |
 
-   PG explains why and wonders out loud. The models tell you what to do.
+   He also asks far more questions (3.9 vs 0.4–1.7) and hedges more, but the
+   brief gave rules for both. PG explains why and wonders out loud. The models
+   tell you what to do.
 
    ![Each model's difference from Paul Graham on 20 features, in units of his own essay-to-essay spread; most dots fall outside his normal range, and the three models usually miss in the same direction](docs/img/fingerprint.svg)
-3. **Each model has its own accent.** A nearest-average classifier names the
-   right model for 74 of 75 essays. Claude uses contractions as often as PG and
-   joins clauses with *and* far more than anyone. Codex loves lists of three.
-   Codex and Grok barely contract at all, about 4 of PG's standard deviations
-   below him.
+3. **Each model has its own accent.** A nearest-average classifier on the
+   unsteered features, leaving each essay out, names the right model for 72 of
+   75 essays (chance: 25). Claude joins clauses with *and* far more than anyone.
+   Codex loves lists of three. Codex and Grok barely contract at all, about 4 of
+   PG's standard deviations below him, while Claude contracts as often as he
+   does.
 
    ![For each model, the three features where it is furthest from the other two](docs/img/accents.svg)
-4. **Their essays are more alike than his.** Each model's essays sit 19–32%
-   closer to their own average than PG's do to his. Real writing wanders;
-   generated writing clusters. `check` measures this for any draft.
+4. **Their essays are not much more alike than his. We got this wrong at
+   first.** Measured raw, each model's essays sit 19–32% closer to their own
+   average than PG's. But his essays are shorter, and rates from fewer
+   sentences are noisier. Cut every essay to the same 80 sentences and the gap
+   mostly goes: Claude 0.85, Grok 0.83, PG 0.83, and only Codex is tighter
+   (0.76, 9% closer). Codex and Grok do keep sentence lengths flatter (median
+   SD 5.4–5.8 words vs PG's 8.5).
 
-   ![Each essay's distance from its own author's average: Paul Graham median 0.82, the models 0.56 to 0.66; and sentence-length spread, where Codex and Grok are much flatter than Paul Graham](docs/img/uniformity.svg)
+   ![Each essay's distance from its own author's average, every essay cut to 80 sentences: Paul Graham, Claude and Grok are about the same, Codex a little tighter; and sentence-length spread, where Codex and Grok are much flatter than Paul Graham](docs/img/uniformity.svg)
 5. **The models aren't wordy. They're compressed.** The usual complaint
    about AI prose is padding, but most model essays contain no filler
    phrases at all (PG: about one per 1,000 words). They repeat the previous
@@ -63,23 +82,27 @@ measured all of them against 50 of his.
 6. **PG speculates; the models define.** Same topics, different word pairs.
    He hedges and looks ahead: *would be*, *it will*, *at least*, *a lot*,
    *not just*. Every model leans on *is a*, *the thing*, *the person who*,
-   *is why*, *the obvious*. Run `writing-style pairs` to find the same thing
-   for any writer.
+   *the obvious*. Treat these as suggestive: they're ranked from thousands of
+   candidate pairs without a multiple-comparison correction, and some
+   (*the person*, *the work*) echo the brief's topic list. Run `tells pairs`
+   to find the same thing for any writer.
 
    ![Word pairs per 10,000 words. Paul Graham uses to be, a lot, there are, would be, at least and it will far more than every model; every model uses the person, the same, the obvious, is a, the work and the thing far more than he does](docs/img/pairs.svg)
-7. **One number sorts them.** For each of the AI tells above, ask whether an
-   essay sits nearer the models' rate or PG's. The share nearer the models is
-   its *machine-likeness*: every PG essay scores 0.39 or less, every model
-   essay 0.61 or more. It measures how sentences are built, so it can't be
-   gamed by borrowing someone's favourite words, and it doesn't depend on any
-   one author. `build` uses it to screen a corpus and `check` reports it for a
-   draft.
+7. **One number sorts them.** Take the 15 unsteered features where all three
+   models lean the same way, and ask whether an essay sits nearer the models'
+   rate or PG's. The share nearer the models is its *machine-likeness*. Scored
+   held out (the reference rebuilt without the essay being scored), PG's
+   essays score 0.00–0.50 and every model essay 0.60–1.00. It measures how
+   sentences are built, so it can't be gamed by borrowing someone's favourite
+   words. `build` uses it to screen a corpus and `check` reports it for a
+   draft. It is built from one human writer, so treat it as a strong hint for
+   other writers, not a detector.
 
-   ![Machine-likeness per essay: Paul Graham's essays between 0.04 and 0.39, every model essay between 0.61 and 1.0](docs/img/machine.svg)
+   ![Machine-likeness per essay, scored held out: Paul Graham's essays between 0.00 and 0.50, every model essay between 0.60 and 1.0](docs/img/machine.svg)
 8. **The brief backfired where it was explicit.** Told "almost no em dashes",
    the models used none (PG uses them). Told "you more than I", they said *I*
-   at a quarter of his rate or less. Told "~15 words", they wrote shorter.
-   They follow instructions harder than the writer they're imitating.
+   at about a quarter of his rate or less. Told "~15 words", they wrote
+   shorter. They follow instructions harder than the writer they're imitating.
 
    ![What the brief asked for against what each model did: no em dashes at all, almost no I, and shorter sentences than the 15-word target](docs/img/told.svg)
 
@@ -164,7 +187,7 @@ so treat this one as a demo, not a test.)
    the author's own documents, and warns when a draft is too smooth.
 6. **Word pairs.** `build` finds the author's signature pairs (ones they use
    far more than the reference models: *would be*, *at least*, *a lot* for
-   Paul Graham) and the AI pairs they avoid (*is why*, *the thing*, *the obvious*).
+   Paul Graham) and the AI pairs they avoid (*is a*, *the thing*, *the obvious*).
    `check` lists AI pairs the draft over-uses and signature pairs a draft
    this long would usually contain. Don't paste the missing ones in; they
    come back when the sentences are the author's.
@@ -174,9 +197,9 @@ so treat this one as a demo, not a test.)
    tighter than every document the author wrote.
 8. **Machine-likeness.** For each of the reference's AI tells, is the text
    nearer the machines' rate or the human's? The share of tells where it's
-   nearer the machines is its machine-likeness. It doesn't depend on any one
-   author: Paul Graham's essays score 0.04–0.39 and every model essay
-   0.61–1.00. `build` uses it to flag documents in the author's own corpus
+   nearer the machines is its machine-likeness. Steered features never count.
+   Held out, Paul Graham's essays score 0.00–0.50 and every model essay
+   0.60–1.00. `build` uses it to flag documents in the author's own corpus
    that an assistant probably wrote, because a model trained on a few of
    those will steer every draft toward the assistant's voice. `check` reports
    it for the draft. It measures sentence structure, so sprinkling in the
@@ -187,13 +210,13 @@ so treat this one as a demo, not a test.)
 It's an agent skill. Install it with [skills](https://github.com/vercel-labs/skills):
 
 ```sh
-npx skills add ArchAstro/writing-style
+npx skills add ArchAstro/tells
 ```
 
 Then ask your agent to "check this draft against how I write" or run
-`/writing-style`. There's no Python package to install: the skill carries its
+`/tells`. There's no Python package to install: the skill carries its
 own code, and its first run sets up a private Python environment in
-`~/.cache/writing-style` (needs `python3` 3.9+) and fetches WordNet and the
+`~/.cache/tells` (needs `python3` 3.9+) and fetches WordNet and the
 tagger there.
 
 The skill tells the agent to:
@@ -210,7 +233,7 @@ The skill tells the agent to:
 The same CLI is the skill's script (adjust the path to wherever your agent keeps skills):
 
 ```sh
-ws=~/.claude/skills/writing-style/scripts/writing-style
+ws=~/.claude/skills/tells/scripts/tells
 $ws build -c 'blog=~/blog/*.md' -c tweets=~/archive/tweets -x '~/blog/draft*.md' -o me.json
 $ws calibrate me.json
 $ws check draft.md -m me.json            # or --json, --all
@@ -224,13 +247,14 @@ stripped.
 
 ### Working on it
 
-The code lives in `skills/writing-style/lib/writing_style`. `uv run pytest`
-runs the tests; `uv run writing-style ...` runs the CLI from the checkout.
+The code lives in `skills/tells/lib/tells`. `uv run pytest`
+runs the tests; `uv run tells ...` runs the CLI from the checkout.
 
 ## Lessons from using it on a real draft
 
 We used the tool to revise a long blog post toward its author's voice, and
-checked the results with an outside AI detector. What we learned:
+checked the results with an outside AI detector. This is one author and one
+post, from data we can't publish, so read it as experience, not evidence:
 
 1. **Agent-written posts in the corpus poison the model.** Three of the
    author's eight "own" posts had been drafted by an assistant. The model
@@ -250,7 +274,7 @@ checked the results with an outside AI detector. What we learned:
    looseness and cut whole ideas.
 5. **What moved the needle was structure.** Putting back the author's
    purpose clauses and first person, and dropping punchline fragments,
-   brought machine-likeness from 0.61 to 0.52 (the author's posts: 0.35–0.48),
+   brought machine-likeness down into the range of the author's own posts,
    and a detector sample of the opening came back human.
 
 ## Find someone's word pairs
@@ -288,12 +312,28 @@ $ws check draft.md -m me.json -r ref.json
 3. Small corpora give wide ranges. Eight documents is about the minimum.
 4. The PG reference is one author and one brief. It shows how these models
    missed that writer, not how to detect AI text in general.
-5. Machine-likeness was calibrated on the essays the reference was built from
-   (in-sample) and checked on one other author's published posts. Texts under
-   40 sentences aren't scored. Treat 0.6 as a prompt to ask, not a verdict.
+5. Machine-likeness was validated held out on the essays the reference was
+   built from (one human writer, three models, one brief) and tried on one
+   other author's posts. Texts under 40 sentences aren't scored, and near 40
+   sentences the score is noisy. Treat 0.6 as a prompt to ask, not a verdict.
+6. `check`'s z-scores treat sentences as independent. Sentences in one
+   document aren't, so z runs high; that's why calibration against the
+   author's own documents matters more than any one |z|.
+7. Distance and diversity depend on length: a short draft looks more unusual
+   than a long one. Compare drafts of similar length to the author's documents.
+8. A model you build stores example sentences from the corpus so `check` can
+   show them. Don't commit models built from writing you can't share
+   (`*.model.json` is gitignored).
 
 ## Develop
 
 ```sh
 uv sync && uv run --group dev pytest -q
 ```
+
+## License
+
+MIT, see [LICENSE](LICENSE). The Paul Graham essays and the generated essays
+are not included; `analysis/pg-vs-llm/fetch_pg_essays.py` fetches his essays
+from paulgraham.com for your own analysis, and only aggregate measurements are
+committed.

@@ -11,9 +11,11 @@ import re
 import subprocess
 import time
 from html.parser import HTMLParser
+import sys
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[1]
+# where the essays go: the corpus root given as the first argument (default: ./corpus)
+ROOT = Path(sys.argv[1]).expanduser() if len(sys.argv) > 1 else Path("corpus")
 OUT = ROOT / "human" / "paul_graham"
 INDEX_URL = "https://www.paulgraham.com/articles.html"
 UA = "writing-patterns-research/1.0 (local corpus build; +https://www.paulgraham.com)"

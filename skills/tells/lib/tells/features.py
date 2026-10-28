@@ -9,8 +9,8 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass
 
-from writing_style.grammar.catalog import STRUCTURES
-from writing_style.sources import WORD
+from tells.grammar.catalog import STRUCTURES
+from tells.sources import WORD
 
 
 @dataclass(frozen=True)
@@ -152,6 +152,6 @@ def surface(sentence: str) -> set[str]:
 
 
 def sentence_features(sentence: str) -> set[str]:
-    from writing_style.grammar.classify import classify
+    from tells.grammar.classify import classify
 
     return {h.id for h in classify(sentence)} | surface(sentence)

@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from functools import lru_cache
 
-from writing_style.grammar.data import ensure_data
+from tells.grammar.data import ensure_data
 
 PENN_TO_WN = {
     "NN": "n",

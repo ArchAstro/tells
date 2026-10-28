@@ -7,7 +7,7 @@ import subprocess
 import sys
 import unittest
 
-from writing_style.grammar.classify import classify
+from tells.grammar.classify import classify
 
 
 def ids(sentence: str) -> set[str]:
@@ -173,7 +173,7 @@ class GrammarEssayGold(unittest.TestCase):
 class Determinism(unittest.TestCase):
     def test_wordnet_lookup_ignores_hash_seed(self):
         # words with more than one WordNet form (inflection, exception list): their sense order once came from a set
-        code = ("from writing_style.grammar.tokens import _pack\n"
+        code = ("from tells.grammar.tokens import _pack\n"
                 "words = [('saw', 'VBD'), ('left', 'VBD'), ('found', 'VBD'), ('leaves', 'NNS'), ('axes', 'NNS'),\n"
                 "         ('bases', 'NNS'), ('lay', 'VBD'), ('felt', 'VBD'), ('better', 'JJR'), ('ground', 'VBN')]\n"
                 "print([_pack(w, p)[:4] for w, p in words])")

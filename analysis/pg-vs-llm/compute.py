@@ -1,4 +1,4 @@
-"""Measure every essay with writing-style's 56 features and derive what the charts need.
+"""Measure every essay with tells's 56 features and derive what the charts need.
 
     uv run --with numpy python analysis/pg-vs-llm/compute.py ~/projects/writing-patterns results/essays.json
 
@@ -9,17 +9,18 @@ derived numbers, never essay text.
 from __future__ import annotations
 
 import json
+import random
 import sys
 from pathlib import Path
 
 import numpy as np
 
-from writing_style import model as M
-from writing_style import pairs as P
-from writing_style.verbosity import measure as verbosity
-from writing_style.features import FEATURES
-from writing_style.sources import expand, load
-from writing_style.cli import load_reference
+from tells import model as M
+from tells import pairs as P
+from tells.verbosity import measure as verbosity
+from tells.features import FEATURES
+from tells.sources import expand, load
+from tells.cli import load_reference
 
 CORPORA = {
     "pg": ("Paul Graham", "human/paul_graham"),
@@ -28,17 +29,63 @@ CORPORA = {
     "grok": ("Grok 4.6", "llm/grok-4.6-medium/essays"),
 }
 MODELS = ["claude", "codex", "grok"]
-# The style brief told the models to hit these, so differences there measure obedience.
-STEERED = {"em_dash", "first_person", "second_person", "long_sentence", "short_sentence", "clausal_coordination"}
-FEATS = list(FEATURES)
 REF = load_reference("pg-vs-llm")
+# The style brief gave rules for these, so differences there measure obedience.
+STEERED = set(REF["steered"])
+FEATS = list(FEATURES)
+MATCH_LEN = 80  # sentences per essay for the length-matched uniformity (PG's median essay)
+REPS = 30
+
+
+def stats_of(name, sents):
+    s = M.Stats(name)
+    for t, f in sents:
+        s.add(t, f)
+    return s
+
+
+def heldout_machine_likeness(essays):
+    """Machine-likeness of each essay against a reference rebuilt without that essay."""
+    out = {k: [] for k in essays}
+    for k, docs in essays.items():
+        for i, d in enumerate(docs):
+            if d.n < 40:
+                continue
+            groups = {g: [x for j, x in enumerate(v) if not (g == k and j == i)] for g, v in essays.items()}
+            ref = M.build_reference(M.Corpus("pg", 1.0, groups["pg"], {}),
+                                    [M.Corpus(m, 1.0, groups[m], {}) for m in MODELS])
+            ref["steered"] = sorted(STEERED)
+            out[k].append(M.machine_likeness(d, ref))
+    return out
+
+
+def separation(A, B, rng, reps=20, folds=5):
+    """Cross-validated AUC of a nearest-centroid score (B-like minus A-like), in pooled-sd units."""
+    aucs = []
+    for _ in range(reps):
+        ia, ib = list(range(len(A))), list(range(len(B)))
+        rng.shuffle(ia)
+        rng.shuffle(ib)
+        sa, sb = [], []
+        for k in range(folds):
+            ta, tb = set(ia[k::folds]), set(ib[k::folds])
+            TA, TB = A[[i for i in ia if i not in ta]], B[[i for i in ib if i not in tb]]
+            sd = np.maximum(np.vstack([TA, TB]).std(0, ddof=1), 0.01)
+            ca, cb = TA.mean(0), TB.mean(0)
+            def score(x):
+                return float(np.linalg.norm((x - ca) / sd) - np.linalg.norm((x - cb) / sd))
+            sa += [score(A[i]) for i in ta]
+            sb += [score(B[i]) for i in tb]
+        aucs.append(M.auc(sb, sa))
+    return float(np.mean(aucs))
 
 
 def main(root: Path, out: Path) -> None:
-    essays, counts, verb = {}, {}, {}
+    essays, counts, verb, sents = {}, {}, {}, {}
     for key, (_, rel) in CORPORA.items():
         docs = [d for d in (load(p) for p in expand(str(root / rel))) if d.sentences]
-        essays[key] = [M.draft_stats(d)[0] for d in docs]
+        sents[key] = [M.featurize(d) for d in docs]
+        essays[key] = [stats_of(d.name, s) for d, s in zip(docs, sents[key])]
         counts[key] = P.count(docs)
         verb[key] = [verbosity(d.sentences) for d in docs]
         print(key, len(essays[key]), file=sys.stderr)
@@ -75,7 +122,21 @@ def main(root: Path, out: Path) -> None:
         mu = X[k].mean(0)
         return [float(np.sqrt((((row - mu) / sd_floor) ** 2).mean())) for row in X[k]]
 
-    uniformity = {k: spread(k) for k in CORPORA}
+    uniformity_raw = {k: spread(k) for k in CORPORA}
+
+    # Shorter essays give noisier rates, and PG's run shorter, so the raw spread overstates his variety.
+    # Length-matched: every essay of at least MATCH_LEN sentences, subsampled to MATCH_LEN, REPS times;
+    # PG's sd (the unit) comes from the same subsamples. Each essay's value is its mean over the reps.
+    rng = random.Random(1)
+    long_ = {k: [s for s in v if len(s) >= MATCH_LEN] for k, v in sents.items()}
+    acc = {k: np.zeros(len(v)) for k, v in long_.items()}
+    for _ in range(REPS):
+        Xs = {k: np.array([[stats_of("", rng.sample(s, MATCH_LEN)).rate(f) for f in FEATS] for s in v])
+              for k, v in long_.items()}
+        sd = np.maximum(Xs["pg"].std(0, ddof=1), 0.01)
+        for k in CORPORA:
+            acc[k] += np.sqrt((((Xs[k] - Xs[k].mean(0)) / sd) ** 2).mean(1))
+    uniformity = {k: (acc[k] / REPS).tolist() for k in CORPORA}
     burst = {k: [s.sd_len for s in v] for k, v in essays.items()}
     mean_len = {k: [s.mean_len for s in v] for k, v in essays.items()}
     # burstiness relative to length, so shorter sentences don't automatically mean less spread
@@ -108,6 +169,19 @@ def main(root: Path, out: Path) -> None:
         confusion[truth][guess] += 1
         hits += guess == truth
 
+    # how well can you tell each model from PG? cross-validated, unsteered features only;
+    # null: PG against PG, split at random
+    srng = random.Random(2)
+    XU = {k: X[k][:, keep] for k in CORPORA}
+    nulls = []
+    for _ in range(10):
+        idx = list(range(len(XU["pg"])))
+        srng.shuffle(idx)
+        half = len(idx) // 2
+        nulls.append(separation(XU["pg"][idx[:half]], XU["pg"][idx[half:]], srng, reps=5))
+    separation_stats = {"features": len(keep), "auc": {m: separation(XU["pg"], XU[m], srng) for m in MODELS},
+                        "null_pg_halves": {"mean": float(np.mean(nulls)), "min": float(min(nulls)), "max": float(max(nulls))}}
+
     # 5. word pairs: what PG uses more than every model, and what every model uses more than PG
     pg_vs = [P.log_odds(counts["pg"], counts[m]) for m in MODELS]
     pool = P.merge([counts[m] for m in MODELS])
@@ -125,17 +199,20 @@ def main(root: Path, out: Path) -> None:
         "n": {k: len(v) for k, v in essays.items()},
         "fingerprint": fingerprint,
         "pca": {"points": pca, "explained": explained.tolist(), "loadings": loadings},
-        "uniformity": uniformity, "sd_len": burst, "mean_len": mean_len, "len_cv": cv,
+        "uniformity": uniformity, "uniformity_raw": uniformity_raw, "match_len": MATCH_LEN, "sd_len": burst, "mean_len": mean_len, "len_cv": cv,
         "signatures": signatures,
         "pairs": word_pairs,
         "verbosity": verb,
         "verbosity_auc": {mid: {m: M.auc([v[mid] for v in verb[m]], [v[mid] for v in verb["pg"]]) for m in MODELS}
                           for mid in verb["pg"][0]},
         "model_id": {"accuracy": hits / len(names), "confusion": confusion},
-        # in-sample: the bundled reference was built from these same essays; essays under
+        # held out: each essay scored against a reference rebuilt without it; essays under
         # 40 sentences are skipped, as `check` and `build` skip them
-        "machine_likeness": {k: [x for x in (M.machine_likeness(s, REF) for s in v) if x is not None]
-                             for k, v in essays.items()},
+        "machine_likeness": heldout_machine_likeness(essays),
+        "machine_likeness_in_sample": {k: [x for x in (M.machine_likeness(s, REF) for s in v) if x is not None]
+                                       for k, v in essays.items()},
+        "steered": sorted(STEERED),
+        "separation": separation_stats,
     }
     out.write_text(json.dumps(data, indent=1))
     print(f"wrote {out}; model-vs-model nearest-centroid accuracy {hits / len(names):.2f}", file=sys.stderr)

@@ -8,7 +8,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from functools import lru_cache
 
-from writing_style.grammar.tokens import (
+from tells.grammar.tokens import (
     ADJ,
     ADV,
     AUX,

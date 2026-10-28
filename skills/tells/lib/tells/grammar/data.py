@@ -19,7 +19,7 @@ import zipfile
 from pathlib import Path
 
 NLTK_DATA = Path(
-    os.environ.get("WRITING_STYLE_NLTK_DATA", Path.home() / ".cache" / "writing-style" / "nltk_data")
+    os.environ.get("TELLS_NLTK_DATA", Path.home() / ".cache" / "tells" / "nltk_data")
 )
 BASE = "https://raw.githubusercontent.com/nltk/nltk_data/gh-pages/packages"
 RESOURCES = (

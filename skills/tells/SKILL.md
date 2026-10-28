@@ -1,11 +1,11 @@
 ---
-name: writing-style
-description: Check a draft against a statistical model of how its author actually writes (grammar structures, sentence length, person, hedges, fragments, dashes) and revise it toward their voice. Use when the user asks to make a draft "sound like me", match their style, check whether a post reads like them or like AI, build a model of their writing from their blog posts, tweets or emails, or runs /writing-style.
+name: tells
+description: Check a draft against a statistical model of how its author actually writes (grammar structures, sentence length, person, hedges, fragments, dashes) and revise it toward their voice. Use when the user asks to make a draft "sound like me", match their style, check whether a post reads like them or like AI, build a model of their writing from their blog posts, tweets or emails, or runs /tells.
 ---
 
 # Matching a draft to its author's voice
 
-`writing-style` measures 56 features per sentence (40 grammar structures from a
+`tells` measures 56 features per sentence (40 grammar structures from a
 WordNet-backed classifier, 16 surface habits) across the author's own writing,
 then tells you which features a draft over- or under-uses.
 
@@ -15,23 +15,23 @@ Everything ships inside this skill; there is nothing to install. Run the CLI
 through the script in this skill's base directory:
 
 ```sh
-bash <skill-dir>/scripts/writing-style --help
+bash <skill-dir>/scripts/tells --help
 ```
 
 `<skill-dir>` is this skill's base directory (shown when the skill loads).
-The commands below write `writing-style` for short; always run them as
-`bash <skill-dir>/scripts/writing-style ...`.
+The commands below write `tells` for short; always run them as
+`bash <skill-dir>/scripts/tells ...`.
 
 The first run makes a private Python environment in
-`~/.cache/writing-style/venv` (needs `python3` 3.9+, takes ~20 s), and the
+`~/.cache/tells/venv` (needs `python3` 3.9+, takes ~20 s), and the
 first command that reads text fetches WordNet and the tagger into
-`~/.cache/writing-style/nltk_data`. Both happen once, by themselves.
+`~/.cache/tells/nltk_data`. Both happen once, by themselves.
 
 ## 1. Build the model from the author's own writing only
 
 ```sh
-writing-style build -c 'blog=~/blog/posts/*.md' -c tweets=~/archive/tweets -o ~/.cache/writing-style/me.json
-writing-style calibrate ~/.cache/writing-style/me.json
+tells build -c 'blog=~/blog/posts/*.md' -c tweets=~/archive/tweets -o ~/.cache/tells/me.json
+tells calibrate ~/.cache/tells/me.json
 ```
 
 1. Only text the author wrote themselves. No drafts you helped write, no
@@ -55,8 +55,8 @@ writing-style calibrate ~/.cache/writing-style/me.json
 ## 2. Check
 
 ```sh
-writing-style check draft.md -m ~/.cache/writing-style/me.json
-writing-style check draft.md -m me.json --json     # for a programmatic loop
+tells check draft.md -m ~/.cache/tells/me.json
+tells check draft.md -m me.json --json     # for a programmatic loop
 ```
 
 Verdicts per feature:
@@ -114,7 +114,7 @@ move it; rewriting sentences the way the author builds them will.
 `check` also prints two blocks after the feature table:
 
 1. **Word pairs.**
-   - *AI pairs this draft over-uses*: pairs like *is why*, *the thing*, *the
+   - *AI pairs this draft over-uses*: pairs like *is a*, *the thing*, *the
      obvious*, *is a*, *the person who*. Rephrase those sentences the way the
      author would say them; don't swap in a synonym of the same shape.
    - *Your pairs that would usually show up*: the author's own markers. Never paste them in. They
@@ -141,9 +141,10 @@ Readers spot these quickly. Avoid them even if the numbers are fine:
 
 The bundled `pg-vs-llm` reference (Paul Graham vs Claude, Codex, Grok given one
 detailed style brief) found the models under-use purpose clauses ("to see
-why"), "wanted to / had to", questions, "if", "there is", concessives, and
-over-use imperatives and gerund complements. Features the brief itself steered
-(dashes, I/you, sentence length) are excluded from the `ai` mark.
+why"), "wanted to / had to", "if", "there is", concessives, and over-use
+imperatives and gerund complements. Features the brief itself gave rules for
+(dashes, I/you, sentence length, "and" joins, hedges, questions, contractions,
+antithesis) are excluded from the `ai` mark and from machine-likeness.
 
 ## 5. Report
 

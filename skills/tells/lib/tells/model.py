@@ -23,8 +23,8 @@ from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
 
-from writing_style.features import FEATURES, sentence_features
-from writing_style.sources import WORD, Doc
+from tells.features import FEATURES, sentence_features
+from tells.sources import WORD, Doc
 
 VERSION = 1
 Z_OFF = 2.0  # |z| at or above this counts as off
@@ -125,7 +125,7 @@ def build_corpus(name: str, docs: list[Doc], weight: float = 1.0, chunk: int | N
                 s_.add(s, f)
             stats.append(s_)
             texts.append([s for s, _ in r])
-    from writing_style.verbosity import measure
+    from tells.verbosity import measure
 
     keep = [i for i, s_ in enumerate(stats) if s_.n]
     ex: dict[str, list[str]] = {}
@@ -149,7 +149,7 @@ def build_corpus(name: str, docs: list[Doc], weight: float = 1.0, chunk: int | N
 class Model:
     corpora: list[Corpus]
     created: str = ""
-    pairs: dict | None = None  # writing_style.pairs.author_pairs: signature pairs and the AI pairs the author avoids
+    pairs: dict | None = None  # tells.pairs.author_pairs: signature pairs and the AI pairs the author avoids
 
     def save(self, path: Path) -> None:
         data = {
@@ -327,7 +327,7 @@ def bands(results: list[Calibration], attr: str = "off") -> dict[str, tuple[floa
 
 def verbosity_rows(draft: dict[str, float], model: "Model") -> list[dict]:
     """The draft's verbosity measures against the range of the author's own documents, per corpus."""
-    from writing_style.verbosity import MEASURES
+    from tells.verbosity import MEASURES
 
     rows = []
     for mid, (label, verbose_when) in MEASURES.items():
@@ -405,15 +405,17 @@ MACHINE_LINE = 0.6  # at or above: reads as machine-written
 def machine_likeness(stats: Stats, reference: dict | None, min_sentences: int = 40) -> float | None:
     """Share of the reference's tell features where a text sits nearer the machines' rate than the human's.
 
-    It doesn't depend on any one author, so it can screen an author's own corpus for
-    drafts an assistant wrote. On the pg-vs-llm essays: PG 0.04-0.39, every model
-    essay 0.61-1.00. None when the text is too short or there is no reference.
+    Features the reference marks as steered never count. It can screen an author's own
+    corpus for drafts an assistant wrote. On the pg-vs-llm essays, scored held out:
+    PG 0.00-0.50, every model essay 0.60-1.00. None when the text is too short or
+    there is no reference.
     """
     if not reference or stats.n < min_sentences:
         return None
     hits = []
+    steered = set(reference.get("steered", []))
     for f, row in reference["features"].items():
-        if not row.get("direction") or f not in FEATURES:
+        if not row.get("direction") or f not in FEATURES or f in steered:
             continue
         machine = sum(row[m] for m in reference["machines"]) / len(reference["machines"])
         r = stats.rate(f)

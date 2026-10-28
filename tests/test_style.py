@@ -7,10 +7,10 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from writing_style import model as M
-from writing_style.cli import main
-from writing_style.features import surface
-from writing_style.sources import Doc, expand, load, markdown_units, split_units, tweet_units
+from tells import model as M
+from tells.cli import main
+from tells.features import surface
+from tells.sources import Doc, expand, load, markdown_units, split_units, tweet_units
 
 
 class Sources(unittest.TestCase):
@@ -152,6 +152,17 @@ class Model(unittest.TestCase):
         self.assertIsNone(M.machine_likeness(short, ref))
         self.assertIsNone(M.machine_likeness(m, None))
 
+    def test_machine_likeness_ignores_steered_features(self):
+        human = M.build_corpus("h", [doc(f"h{i}", PLAIN * 3) for i in range(5)], chunk=0)
+        machine = M.build_corpus("m", [doc(f"m{i}", CLIPPED * 3) for i in range(5)], chunk=0)
+        ref = M.build_reference(human, [machine])
+        m, _ = M.draft_stats(doc("m", CLIPPED * 10))
+        tells = [f for f, row in ref["features"].items() if row["direction"]]
+        ref["steered"] = tells
+        self.assertIsNone(M.machine_likeness(m, ref))
+        ref["steered"] = tells[:-1]
+        self.assertIn(M.machine_likeness(m, ref), (0.0, 1.0))
+
     def test_corpus_machine_likeness_skips_chunks(self):
         human = M.build_corpus("h", [doc(f"h{i}", PLAIN * 3) for i in range(5)], chunk=0)
         machine = M.build_corpus("m", [doc(f"m{i}", CLIPPED * 3) for i in range(5)], chunk=0)
@@ -171,7 +182,7 @@ class Model(unittest.TestCase):
 
 class Pairs(unittest.TestCase):
     def test_consistent_pairs_beat_every_comparison(self):
-        from writing_style import pairs as P
+        from tells import pairs as P
 
         me = P.count([doc(f"a{i}", ["I think it is a lot better.", "I think so, a lot."] * 5) for i in range(6)])
         bots = [P.count([doc(f"{n}{i}", ["The thing is a tool.", "That is why the thing works."] * 5)
@@ -183,7 +194,7 @@ class Pairs(unittest.TestCase):
         self.assertNotIn(("i", "think"), theirs)
 
     def test_topic_nouns_are_dropped(self):
-        from writing_style import pairs as P
+        from tells import pairs as P
 
         a = P.count([doc(f"a{i}", ["The founder left."] * 5) for i in range(6)])
         b = P.count([doc(f"b{i}", ["It rained."] * 5) for i in range(6)])
@@ -193,7 +204,7 @@ class Pairs(unittest.TestCase):
 
 class Verbosity(unittest.TestCase):
     def test_padding_scores_wordier_than_plain(self):
-        from writing_style.verbosity import measure
+        from tells.verbosity import measure
 
         plain = measure(["The server settles the job.", "I wrote the scheduler in a week.", "Tests run on push."] * 4)
         padded = measure(["In order to settle the job, the server is able to do the settlement.",
@@ -206,7 +217,7 @@ class Verbosity(unittest.TestCase):
     def test_rows_flag_both_directions(self):
         blog = M.build_corpus("blog", [doc(f"b{i}", PLAIN * 5) for i in range(4)])
         model = M.Model([blog])
-        from writing_style.verbosity import measure
+        from tells.verbosity import measure
 
         rows = {r["id"]: r for r in M.verbosity_rows(measure(["In order to do it, the fact that it is done matters."] * 8), model)}
         self.assertEqual(rows["filler"]["verdict"], "more verbose")
@@ -214,7 +225,7 @@ class Verbosity(unittest.TestCase):
 
 class PairsInModel(unittest.TestCase):
     def test_draft_report_flags_ai_pairs_and_missing_signature(self):
-        from writing_style import pairs as P
+        from tells import pairs as P
 
         ap = {"words": 1000, "signature": [{"pair": "i think", "you": 50.0, "machines": 1.0}],
               "ai": [{"pair": "the thing", "you": 1.0, "machines": 20.0}]}
@@ -224,7 +235,7 @@ class PairsInModel(unittest.TestCase):
         self.assertEqual(rep["missing"][0]["pair"], "i think")
 
     def test_bundled_reference_has_pairs(self):
-        from writing_style.cli import load_reference
+        from tells.cli import load_reference
 
         ref = load_reference("pg-vs-llm")
         self.assertIn("is why", [r["pair"] for r in ref["pairs"]["ai"]])
@@ -253,7 +264,7 @@ class Cli(unittest.TestCase):
             self.assertIn("machine_likeness", res)
 
     def test_bundled_reference_loads(self):
-        from writing_style.cli import load_reference
+        from tells.cli import load_reference
         ref = load_reference("pg-vs-llm")
         self.assertIn("em_dash", ref["steered"])
         self.assertEqual(ref["features"]["purpose_infinitive"]["direction"], "too_few")

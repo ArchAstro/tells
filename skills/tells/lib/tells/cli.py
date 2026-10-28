@@ -1,9 +1,9 @@
-"""writing-style: build a model of how you write, then check drafts against it.
+"""tells: build a model of how you write, then check drafts against it.
 
-    writing-style setup
-    writing-style build -c blog='~/blog/*.md' -c tweets=~/archive/tweets -o me.json
-    writing-style calibrate me.json
-    writing-style check draft.md -m me.json
+    tells setup
+    tells build -c blog='~/blog/*.md' -c tweets=~/archive/tweets -o me.json
+    tells calibrate me.json
+    tells check draft.md -m me.json
 """
 
 from __future__ import annotations
@@ -14,9 +14,9 @@ import sys
 from importlib import resources
 from pathlib import Path
 
-from writing_style import model as M
-from writing_style.features import FEATURES
-from writing_style.sources import expand, load
+from tells import model as M
+from tells.features import FEATURES
+from tells.sources import expand, load
 
 DEFAULT_REFERENCE = "pg-vs-llm"
 
@@ -51,7 +51,7 @@ def load_reference(name: str | None) -> dict | None:
     if p.is_file():
         return json.loads(p.read_text())
     try:
-        return json.loads(resources.files("writing_style.data").joinpath(f"{name}.json").read_text())
+        return json.loads(resources.files("tells.data").joinpath(f"{name}.json").read_text())
     except FileNotFoundError:
         raise SystemExit(f"no reference {name!r} (a file path, or one of: {DEFAULT_REFERENCE})")
 
@@ -60,14 +60,14 @@ def load_reference(name: str | None) -> dict | None:
 
 
 def cmd_setup(a) -> None:
-    from writing_style.grammar.data import NLTK_DATA, ensure_data
+    from tells.grammar.data import NLTK_DATA, ensure_data
 
     ensure_data()
     print(f"NLTK data ready in {NLTK_DATA}")
 
 
 def cmd_build(a) -> None:
-    from writing_style import pairs as P
+    from tells import pairs as P
 
     corpora, counts = [], []
     for spec in a.corpus:
@@ -120,10 +120,10 @@ def cmd_check(a) -> None:
         raise SystemExit(f"{a.draft}: not found")
     doc = load(paths[0])
     stats, by_feature = M.draft_stats(doc)
-    from writing_style import pairs as P
+    from tells import pairs as P
 
     pr = P.draft_report(P.count([doc]), model.pairs) if model.pairs else None
-    from writing_style import verbosity as V
+    from tells import verbosity as V
 
     vrows = M.verbosity_rows(V.measure(doc.sentences), model)
     held_out = model.excluding(doc.name)
@@ -257,13 +257,14 @@ def cmd_reference(a) -> None:
         name, globs, _ = parse_corpus(spec)
         machines.append(M.build_corpus(name, load_docs(globs, a.exclude), chunk=0, examples=False))
         print(f"{name}: {len(machines[-1].docs)} docs", file=sys.stderr)
-    from writing_style import pairs as P
+    from tells import pairs as P
 
     ref = M.build_reference(human, machines, a.min_gap)
     human_counts = P.count(load_docs(human_globs, a.exclude))
     machine_counts = {parse_corpus(spec)[0]: P.count(load_docs(parse_corpus(spec)[1], a.exclude)) for spec in a.machine}
     ref["pairs"] = P.build_reference(human_counts, machine_counts)
     ref["note"] = a.note or ""
+    ref["steered"] = [f.strip() for f in (a.steered or "").split(",") if f.strip()]
     Path(a.out).write_text(json.dumps(ref, indent=1))
     tells = {f: v["direction"] for f, v in ref["features"].items() if v["direction"]}
     print(f"wrote {a.out}: {len(tells)} features separate every machine from {human_name}")
@@ -272,7 +273,7 @@ def cmd_reference(a) -> None:
 
 
 def cmd_pairs(a) -> None:
-    from writing_style import pairs as P
+    from tells import pairs as P
 
     a_name, a_globs, _ = parse_corpus(a.a)
     A = P.count(load_docs(a_globs, a.exclude))
@@ -307,7 +308,7 @@ def cmd_features(a) -> None:
 
 
 def main(argv: list[str] | None = None) -> None:
-    p = argparse.ArgumentParser(prog="writing-style", description=__doc__,
+    p = argparse.ArgumentParser(prog="tells", description=__doc__,
                                 formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = p.add_subparsers(dest="cmd", required=True)
 
@@ -344,6 +345,8 @@ def main(argv: list[str] | None = None) -> None:
     r.add_argument("-x", "--exclude", action="append", default=[])
     r.add_argument("--min-gap", type=float, default=0.15, help="AUC distance from 0.5 that counts")
     r.add_argument("--note", default="")
+    r.add_argument("--steered", default="",
+                   help="comma-separated features the machine prompt gave rules for; never used as tells")
     r.add_argument("-o", "--out", required=True)
     r.set_defaults(fn=cmd_reference)
 

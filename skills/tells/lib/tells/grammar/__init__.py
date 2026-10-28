@@ -3,7 +3,7 @@
 Vendored from writing-patterns (analysis/grammar).
 """
 
-from writing_style.grammar.catalog import STRUCTURES, Structure
-from writing_style.grammar.classify import classify, classify_text, ids_of
+from tells.grammar.catalog import STRUCTURES, Structure
+from tells.grammar.classify import classify, classify_text, ids_of
 
 __all__ = ["STRUCTURES", "Structure", "classify", "classify_text", "ids_of"]

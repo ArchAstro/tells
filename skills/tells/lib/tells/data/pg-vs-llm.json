@@ -7216,13 +7216,18 @@
   },
   "machine_total": 100483
  },
- "note": "50 Paul Graham essays vs 25 essays each from three models given one detailed style brief (projects/writing-patterns, Oct 2026). Rates are per sentence. The style brief told the models to avoid em dashes, use 'you' more than 'I', keep sentences near 15 words and split 'and' clauses, so those features ('steered') say more about the brief than about the models.",
+ "note": "50 Paul Graham essays vs 25 essays each from three models given one detailed style brief (analysis/pg-vs-llm/style-brief.md). Rates are per sentence. The brief gave explicit rules for dashes, 'you' vs 'I', sentence length, 'and' joins, hedging, questions, contractions and antithesis, so those features ('steered') say more about the brief than about the models and are never used as AI tells.",
  "steered": [
   "em_dash",
   "first_person",
   "second_person",
   "long_sentence",
   "short_sentence",
-  "clausal_coordination"
+  "clausal_coordination",
+  "hedge",
+  "polar_question",
+  "wh_question",
+  "contraction",
+  "not_x_but_y"
  ]
 }

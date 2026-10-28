@@ -132,8 +132,8 @@ table_map = table(["Group", "Essays", "Centre (x, y)"],
 
 # ---------------------------------------------------------------- 2. uniformity
 panels = [
-    ("How far each essay sits from its own author's average", "uniformity", 1,
-     "distance in units of PG's essay-to-essay spread (RMS over 56 features)", 0, None),
+    ("How far each essay sits from its own author's average, every essay cut to 80 sentences", "uniformity", 1,
+     "distance in units of PG's essay-to-essay spread (RMS over 56 features), mean of 30 random 80-sentence cuts", 0, None),
     ("How much sentence length varies inside each essay", "sd_len", 1, "standard deviation of words per sentence", 0, None),
 ]
 uni_svgs, uni_rows = [], []
@@ -426,15 +426,17 @@ ol li {{ margin:6px 0; color:var(--text2); }}
 and had each write 25 essays on his topics. Then we measured all 125 essays, sentence by sentence, on 56 grammar and
 style features.</p>
 <div class="stats">
-<div class="stat"><b>≥ {min(multi[m]['fixed']['unsteered'] for m in AUDIT['multi']):.2f}</b><span>AUC separating each model from PG, even ignoring everything the brief steered (PG vs PG: {nulls['unsteered']:.2f})</span></div>
+<div class="stat"><b>{min(D['separation']['auc'].values()):.2f}</b><span>cross-validated AUC separating each model from PG on the {D['separation']['features']} features the brief never mentioned (PG vs PG: {D['separation']['null_pg_halves']['mean']:.2f})</span></div>
 <div class="stat"><b>{right} of {sum(D['n'][m] for m in MODELS)}</b><span>model essays a simple classifier assigns to the right model</span></div>
-<div class="stat"><b>{min(u[m] for m in MODELS):.2f}–{max(u[m] for m in MODELS):.2f} vs {u['pg']:.2f}</b><span>how much each model's essays vary from each other, vs PG's</span></div>
+<div class="stat"><b>{min(min(ml[m]) for m in MODELS):.2f}+ vs ≤ {max(ml['pg']):.2f}</b><span>machine-likeness, held out: every model essay vs every PG essay</span></div>
 </div>
 
 <section class="card">
 <h2>Every essay, placed by how it's written</h2>
-<p>Each dot is one essay, positioned by the two strongest patterns across the features the brief left alone. Paul Graham spreads
-across the map. Each model sits in its own tight patch; only one of his 50 essays strays near a model.</p>
+<p>Each dot is one essay, positioned by the two strongest patterns across the features the brief left alone. Paul Graham's
+50 essays sit on one side and all 75 model essays on the other, with open ground between. On these features the three
+models mostly overlap each other: what sets them apart from each other is mostly what the brief steered (contractions,
+"and" joins, short sentences).</p>
 {legend()}
 {chart_map}
 <p class="unit">Principal components of features standardised against Paul Graham; the axes explain {ex[0] * 100:.0f}% and
@@ -443,11 +445,12 @@ across the map. Each model sits in its own tight patch; only one of his 50 essay
 </section>
 
 <section class="card">
-<h2>The models' essays are more alike than Paul Graham's</h2>
-<p>A person's essays wander: different moods, different years, different arguments. Each model's essays sit
-{(1 - max(u[m] for m in MODELS) / u['pg']) * 100:.0f}–{(1 - min(u[m] for m in MODELS) / u['pg']) * 100:.0f}% closer to
-their own average than Paul Graham's do to his. Codex and Grok also keep their sentence lengths more even; Claude
-varies its sentences about as much as he does.</p>
+<h2>Are the models' essays more alike than his? Mostly not.</h2>
+<p>Measured raw, the models' essays look 19–32% more alike than Paul Graham's. But his essays are shorter, and rates
+from fewer sentences are noisier. Here every essay is cut to the same {D['match_len']} sentences (averaged over 30 random
+cuts). Claude ({u['claude']:.2f}) and Grok ({u['grok']:.2f}) vary about as much as he does ({u['pg']:.2f}); only Codex
+({u['codex']:.2f}) is tighter. Codex and Grok do keep their sentence lengths more even; Claude varies its sentences
+about as much as he does.</p>
 {legend()}
 <div class="wide">{"".join(uni_svgs)}</div>
 {table_uni}
@@ -488,10 +491,10 @@ gap is partly steered; the rest wasn't asked for.) Clipped, dense prose is its o
 <h2>One number that sorts them</h2>
 <p>Take every feature where all three models lean the same way, and ask of each essay: is it nearer the models' rate
 or Paul Graham's? The share of features where it's nearer the models is its machine-likeness. Every model essay
-scores {min(min(ml[m]) for m in MODELS):.2f} or more; every Paul Graham essay {max(ml["pg"]):.2f} or less. These are
-the essays the reference was built from, so the gap here is a best case. On a different author's published posts,
-which the reference has never seen, it still put them below 0.5 and posts an assistant had drafted above 0.7.
-It measures how sentences are built, so it can't be fooled by sprinkling in someone's favourite words.</p>
+scores {min(min(ml[m]) for m in MODELS):.2f} or more; every Paul Graham essay {max(ml["pg"]):.2f} or less. Each essay is
+scored against a reference rebuilt without it, and the features the brief gave rules for don't count. It measures how
+sentences are built, so it can't be fooled by sprinkling in someone's favourite words. It was built from one writer,
+so for anyone else treat it as a strong hint, not a detector.</p>
 {legend()}
 <div class="wide">{ml_svg}</div>
 {table_ml}
@@ -501,7 +504,7 @@ It measures how sentences are built, so it can't be fooled by sprinkling in some
 <h2>Paul Graham speculates; the models define</h2>
 <p>Word pairs that every model uses more than Paul Graham, or he uses more than every model, in at least 8 essays
 (subject nouns like "the founder" left out). He hedges and looks ahead: <i>would be</i>, <i>it will</i>, <i>at least</i>,
-<i>a lot</i>. The models pin things down: <i>is a</i>, <i>the thing</i>, <i>the person who</i>, <i>is why</i>,
+<i>a lot</i>. The models pin things down: <i>is a</i>, <i>the thing</i>, <i>the person who</i>,
 <i>the obvious</i>.</p>
 {legend()}
 <div class="wide">{"".join(pair_svgs)}</div>
@@ -573,12 +576,12 @@ svg { font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-ser
 IMG = OUT.parent / "img"
 IMG.mkdir(exist_ok=True)
 TITLES = {
-    "map": ("Every essay, placed by how it's written", "PG spreads out; each model sits in its own tight patch."),
-    "uniformity": ("The models' essays are more alike than PG's", "Each dot is an essay; the bar is the median."),
+    "map": ("Every essay, placed by how it's written", "PG on one side, all 75 model essays on the other."),
+    "uniformity": ("Matched for length, only Codex is more uniform than PG", "Each dot is an essay cut to 80 sentences; the bar is the median."),
     "fingerprint": ("Where each model differs from Paul Graham", "In units of PG's own essay-to-essay spread."),
     "accents": ("Each model has its own accent", "Where each model is furthest from the other two (per 100 sentences)."),
     "verbosity": ("The models aren't wordy. They're compressed.", "Each dot is an essay; the bar is the median."),
-    "machine": ("One number that sorts them", "Machine-likeness: share of AI tells where an essay sits nearer the models. Shaded: 0.6+."),
+    "machine": ("One number that sorts them", "Machine-likeness, held out: share of unsteered AI tells where an essay sits nearer the models. Shaded: 0.6+."),
     "pairs": ("Paul Graham speculates; the models define", "Word pairs per 10,000 words, in at least 8 essays."),
     "told": ("Where the brief gave a rule, the models overshot it", "Dashed line: what the brief asked for."),
 }

@@ -4,9 +4,9 @@ from __future__ import annotations
 
 import re
 
-from writing_style.grammar.catalog import CATALOG as CORE, STRUCTURES, Structure
-from writing_style.grammar.essay import CATALOG as ESSAY
-from writing_style.grammar.tokens import annotate
+from tells.grammar.catalog import CATALOG as CORE, STRUCTURES, Structure
+from tells.grammar.essay import CATALOG as ESSAY
+from tells.grammar.tokens import annotate
 
 CATALOG = CORE + ESSAY
 

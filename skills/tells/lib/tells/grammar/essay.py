@@ -5,13 +5,13 @@ Same contract as catalog.py: toks → list[Structure], precision over recall.
 
 from __future__ import annotations
 
-from writing_style.grammar.catalog import (
+from tells.grammar.catalog import (
     _content_noun,
     _has_frame,
     _hit,
     Structure,
 )
-from writing_style.grammar.tokens import (
+from tells.grammar.tokens import (
     ADJ,
     ADV,
     AUX,
