@@ -108,7 +108,7 @@ that says "unsteered".
 
    ![What the brief asked for against what each model did: no em dashes at all, almost no I, and shorter sentences than the 15-word target](docs/img/told.svg)
 
-Interactive version with tooltips and tables: [`docs/pg-vs-llm.html`](docs/pg-vs-llm.html).
+Interactive version with tooltips and tables: [archastro.github.io/tells](https://archastro.github.io/tells/).
 
 Audit notes, bugs we fixed in the original experiment and how to reproduce:
 [`analysis/pg-vs-llm/`](analysis/pg-vs-llm/README.md).
