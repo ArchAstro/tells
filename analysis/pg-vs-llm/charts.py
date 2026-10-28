@@ -108,8 +108,8 @@ def my(v):
 
 
 g = [f'<rect x="{L}" y="{T}" width="{W - L - R}" height="{H - T - B}" class="frame"/>',
-     f'<text x="{L}" y="{H - 14}" class="axis">← contractions, And/But openers, "to" purpose clauses</text>',
-     f'<text x="{W - R}" y="{H - 14}" class="axis" text-anchor="end">commands, lists of three →</text>']
+     f'<text x="{L}" y="{H - 14}" class="axis">← And/But openers, "to" purpose clauses</text>',
+     f'<text x="{W - R}" y="{H - 14}" class="axis" text-anchor="end">commands, bare-verb openers, gerund objects →</text>']
 cent = {}
 for k in KEYS:
     xs, ys = [p[0] for p in pts[k]], [p[1] for p in pts[k]]
