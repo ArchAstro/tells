@@ -13,11 +13,12 @@ classifiers = [
     "Topic :: Text Processing :: Linguistic",
 ]
 
+dependencies = ["nltk>=3.9", "certifi"]
+
 [project.urls]
 Homepage = "https://github.com/ArchAstro/tells"
 Issues = "https://github.com/ArchAstro/tells/issues"
 Changelog = "https://github.com/ArchAstro/tells/blob/main/CHANGELOG.md"
-dependencies = ["nltk>=3.9", "certifi"]
 
 [project.scripts]
 tells = "tells.cli:main"
