@@ -1,10 +1,22 @@
 [project]
 name = "tells"
 version = "0.1.0"
-description = "Model how you write (grammar and surface habits) and check drafts against it."
+description = "Every writer has tells. Learn yours, then check which ones a draft is missing and which AI tells it picked up."
 readme = "README.md"
 requires-python = ">=3.9"
 license = { text = "MIT" }
+authors = [{ name = "ArchAstro" }]
+keywords = ["writing", "style", "stylometry", "ai-detection", "agent-skills"]
+classifiers = [
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Topic :: Text Processing :: Linguistic",
+]
+
+[project.urls]
+Homepage = "https://github.com/ArchAstro/tells"
+Issues = "https://github.com/ArchAstro/tells/issues"
+Changelog = "https://github.com/ArchAstro/tells/blob/main/CHANGELOG.md"
 dependencies = ["nltk>=3.9", "certifi"]
 
 [project.scripts]

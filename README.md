@@ -1,5 +1,7 @@
 # tells
 
+[![test](https://github.com/ArchAstro/tells/actions/workflows/test.yml/badge.svg)](https://github.com/ArchAstro/tells/actions/workflows/test.yml) [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+
 **Does this draft sound like the person who's supposed to have written it?**
 
 Every writer has tells, the small habits that give them away, and so does
@@ -326,6 +328,9 @@ $ws check draft.md -m me.json -r ref.json
    (`*.model.json` is gitignored).
 
 ## Develop
+
+Issues and pull requests are welcome, including ones that challenge a
+claim in the analysis. Run the tests before sending a change:
 
 ```sh
 uv sync && uv run --group dev pytest -q

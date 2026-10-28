@@ -1,0 +1,30 @@
+name: test
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+        python: ["3.9", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - name: Unit tests
+        run: uv run --group dev pytest -q
+      # the path users take: the skill's own bootstrap script, with nothing preinstalled
+      - name: Skill bootstrap smoke test
+        env:
+          TELLS_HOME: ${{ runner.temp }}/tells
+        run: |
+          bash skills/tells/scripts/tells --help
+          bash skills/tells/scripts/tells build -c 'docs=README.md,analysis/pg-vs-llm/README.md,skills/tells/SKILL.md' -o "$RUNNER_TEMP/me.json"
+          bash skills/tells/scripts/tells check analysis/pg-vs-llm/style-brief.md -m "$RUNNER_TEMP/me.json" --json > /dev/null
